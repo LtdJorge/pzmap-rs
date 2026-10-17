@@ -66,8 +66,13 @@ impl From<Error> for PyErr {
     fn from(error: Error) -> PyErr {
         match error {
             // Called with `(errno, message, filename)`, `OSError` creates the matching subclass,
-            // such as `FileNotFoundError`, and sets its `filename` attribute.
+            // such as `FileNotFoundError`, and sets its `filename` attribute. On Windows the OS
+            // error is a Windows error code, not an errno, so it goes in the fourth argument,
+            // `winerror`, and Python works out the errno from it.
             Error::Io(path, error) => match error.raw_os_error() {
+                #[cfg(windows)]
+                Some(code) => PyOSError::new_err((0, error.to_string(), path, code)),
+                #[cfg(not(windows))]
                 Some(code) => PyOSError::new_err((code, error.to_string(), path)),
                 None => PyOSError::new_err(format!("{}: {error}", path.display())),
             },
