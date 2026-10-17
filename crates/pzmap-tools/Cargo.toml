@@ -1,0 +1,57 @@
+[package]
+name = "pzmap-tools"
+version = "0.1.0"
+edition = "2024"
+rust-version.workspace = true
+license = "(MIT OR Apache-2.0) AND OFL-1.1"
+description = "Command-line tools for Project Zomboid map files, built on libpzmap."
+repository = "https://github.com/LtdJorge/pzmap-rs"
+keywords = ["projectzomboid", "map", "texturepack", "tui", "gui"]
+categories = ["game-development", "command-line-utilities", "gui"]
+
+# Browses the sprites inside the game's `.pack` texture packs, in a terminal or in a window.
+[[bin]]
+name = "pack-view"
+path = "src/bin/pack_view/main.rs"
+
+[dependencies]
+libpzmap = { path = "../libpzmap", version = "0.1.0" }
+memmap2 = "0.9.11"
+thiserror = { workspace = true }
+
+anyhow = { workspace = true }
+clap = { workspace = true }
+image = { version = "0.25", default-features = false, features = ["png"] }
+ratatui = { version = "0.30.2", optional = true, default-features = false, features = [
+    "crossterm",
+    "std",
+    "layout-cache",
+    "underline-color",
+] }
+eframe = { version = "0.37.0", optional = true, default-features = false, features = [
+    "accesskit",
+    "glow",
+    "wayland",
+    "x11",
+] }
+rfd = { version = "0.17.2", optional = true }
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.61.2", features = [
+    "Win32_Foundation",
+    "Win32_System_Console",
+    "Win32_System_Registry",
+] }
+
+[dev-dependencies]
+egui_kittest = "0.37.0"
+
+[features]
+default = ["gui", "tui"]
+# The terminal frontend, drawn with the kitty graphics protocol.
+tui = ["dep:ratatui"]
+# The window frontend, with native file dialogs.
+gui = ["dep:eframe", "dep:rfd"]
+
+[lints]
+workspace = true

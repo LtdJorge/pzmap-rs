@@ -1,0 +1,68 @@
+[package]
+name = "pzmap2img"
+version = "0.1.0"
+edition = "2024"
+rust-version.workspace = true
+license = "MIT OR Apache-2.0"
+readme = "README.md"
+description = "Builds an optimized runtime representation of a Project Zomboid map and renders map tiles from it."
+repository = "https://github.com/LtdJorge/pzmap-rs"
+keywords = ["projectzomboid", "map", "tiles", "renderer"]
+categories = ["game-development", "rendering"]
+
+[[bin]]
+name = "pzmap2img"
+path = "src/main.rs"
+required-features = ["cli"]
+
+[dependencies]
+# Internal
+libpzmap = { path = "../libpzmap", version = "0.1.0" }
+
+# Utils
+thiserror = { workspace = true }
+lasso = { version = "0.7.3", features = ["multi-threaded", "ahasher", "inline-more", "serde"] }
+ahash = { workspace = true }
+rayon = "1.12.0"
+memmap2 = "0.9.11"
+
+
+# Image processing
+image = { version = "0.25", default-features = false, features = ["png", "webp"] }
+
+# Observability
+tracing = { workspace = true }
+
+# Argument parsing and logging for the command-line tool. Optional, so library users don't need
+# them.
+clap = { workspace = true, optional = true }
+tracing-subscriber = { workspace = true, optional = true }
+anyhow = { workspace = true, optional = true }
+
+# Lossy and lossless WebP encoding through libwebp. The `image` crate's WebP encoder is
+# lossless only.
+libwebp-sys = { version = "0.14.4", optional = true }
+
+# Heap profiling
+dhat = { version = "0.3.3", optional = true }
+
+[dev-dependencies]
+# Temporary directories for test files, deleted when the test ends.
+tempfile = "3"
+anyhow = { workspace = true }
+
+[features]
+default = ["cli", "webp"]
+# The command-line tool, with its argument parsing and logging.
+cli = ["dep:anyhow", "dep:clap", "dep:tracing-subscriber"]
+# WebP output. Without it, tiles are PNG only.
+webp = ["dep:libwebp-sys"]
+# Uses dhat as the allocator, to profile the command-line tool's heap use.
+dhat-heap = ["dep:dhat"]
+
+[lints]
+workspace = true
+
+# `statvfs`, to check free disk space before a render.
+[target.'cfg(unix)'.dependencies]
+rustix = { version = "1.1.4", features = ["fs"] }
