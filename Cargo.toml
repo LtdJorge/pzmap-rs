@@ -1,0 +1,50 @@
+[workspace]
+resolver = "3"
+members = ["crates/*"]
+
+# The oldest Rust generally required. Both egui and the atomic `try_update` method need 1.95.
+# Checked by CI.
+[workspace.package]
+rust-version = "1.95"
+
+# Dependency versions shared by every crate in the workspace, so they stay in step.
+[workspace.dependencies]
+ahash = "0.8.12"
+anyhow = "1.0.104"
+clap = { version = "4.6.7", features = ["derive"] }
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.154"
+thiserror = "2.0.21"
+tokio = { version = "1.53.3", features = ["rt-multi-thread", "macros", "sync", "time", "signal"] }
+tracing = { version = "0.1.44", features = ["attributes"] }
+tracing-subscriber = { version = "0.3.23", features = ["fmt", "env-filter"] }
+
+[workspace.lints.clippy]
+# Assertions are the only way the code is allowed to panic. These lints deny the other ways,
+# such as `unwrap` and slice indexing. Bad input gets a typed error instead of a panic.
+#
+# `assert!` and `assert_eq!` are not denied because they are how the code checks its own
+# invariants. Test modules can opt out with a module-level `#![allow]`.
+unwrap_used = "deny"
+expect_used = "deny"
+panic = "deny"
+todo = "deny"
+unimplemented = "deny"
+indexing_slicing = "deny"
+cast_possible_truncation = "deny"
+cast_sign_loss = "deny"
+cast_possible_wrap = "deny"
+
+[profile.test]
+lto = "thin"
+opt-level = 3
+
+[profile.release]
+debug = 1
+lto = "fat"
+opt-level = 3
+codegen-units = 1
+# Keep debug assertions and overflow checks on in release builds. Bad input already gets typed
+# errors, assertions must only fail when the code has a bug.
+debug-assertions = true
+overflow-checks = true
