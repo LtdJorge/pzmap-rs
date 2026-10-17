@@ -1,0 +1,39 @@
+[build-system]
+requires = ["maturin>=1.7,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "pzmap"
+description = "Parsers for Project Zomboid's on-disk map formats: lotheader, lotpack and texture packs."
+readme = "README.md"
+requires-python = ">=3.8"
+license = "MIT OR Apache-2.0"
+# Shipped in the wheel's `.dist-info/licenses/`. The notices cover the Rust crates compiled into
+# the extension module.
+license-files = ["LICENSE-MIT", "LICENSE-APACHE", "THIRD-PARTY-NOTICES.md"]
+authors = [{ name = "Jorge López" }]
+keywords = ["projectzomboid", "parser", "gamedev", "map"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Programming Language :: Rust",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Topic :: Games/Entertainment",
+    "Topic :: Software Development :: Libraries",
+]
+dynamic = ["version"]
+
+[project.urls]
+Repository = "https://github.com/LtdJorge/pzmap-rs"
+
+[project.optional-dependencies]
+test = ["pytest>=7"]
+
+[tool.maturin]
+# The compiled extension is installed as `pzmap._pzmap`. The Python package around it re-exports
+# its classes and ships the type stubs and the `py.typed` marker.
+module-name = "pzmap._pzmap"
+python-source = "python"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
