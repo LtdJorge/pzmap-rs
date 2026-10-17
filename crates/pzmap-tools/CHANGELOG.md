@@ -7,6 +7,8 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-10-17
+
 The first public release.
 
 ### Added
@@ -15,4 +17,5 @@ The first public release.
   kitty graphics.
 - Automatic discovery of the game in Steam libraries on Windows, Linux and macOS.
 
-[Unreleased]: https://github.com/LtdJorge/pzmap-rs/commits/master/crates/pzmap-tools
+[Unreleased]: https://github.com/LtdJorge/pzmap-rs/compare/pzmap-tools-v0.1.0...master
+[0.1.0]: https://github.com/LtdJorge/pzmap-rs/releases/tag/pzmap-tools-v0.1.0

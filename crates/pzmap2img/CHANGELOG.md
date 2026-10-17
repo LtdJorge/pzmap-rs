@@ -20,4 +20,5 @@ The first public release.
 - Vegetation options: season, snow, flowers, and tree sizes.
 - Memory limits for both phases and a free disk space check before rendering.
 
-[Unreleased]: https://github.com/LtdJorge/pzmap-rs/commits/master/crates/pzmap2img
+[Unreleased]: https://github.com/LtdJorge/pzmap-rs/compare/pzmap2img-v0.1.0...master
+[0.1.0]: https://github.com/LtdJorge/pzmap-rs/releases/tag/pzmap2img-v0.1.0
