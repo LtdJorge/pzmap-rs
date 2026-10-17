@@ -1,4 +1,5 @@
 //! Encodes a 64 x 64 transparent RGBA tile as PNG, then checks each fdeflate step on its own.
+//! The last step does the same through pzmap2img, as its `decode_tile` doctest does.
 
 use std::{io::Cursor, process::ExitCode};
 
@@ -87,6 +88,43 @@ fn main() -> ExitCode {
         Err(error) => {
             println!("image decode:        error {error:?}");
             ok = false;
+        }
+    }
+
+    // 5. The `decode_tile` doctest of pzmap2img 0.1.0, which fails on Apple silicon.
+    {
+        use pzmap2img::render::{PngEncoder, TileEncoder, blend::Canvas, decode_tile};
+
+        let tile = Canvas::new(64, 64);
+        let mut bytes = Vec::new();
+        PngEncoder::default().encode(&tile, &mut bytes).unwrap();
+        let stream = idat(&bytes);
+        println!("pzmap2img png file:  {} bytes, sum {}", bytes.len(), sum(&bytes));
+        println!(
+            "  its zlib stream:   {} bytes, sum {}, {} the first png file's stream",
+            stream.len(),
+            sum(&stream),
+            if stream == zlib { "same as" } else { "differs from" }
+        );
+        match fdeflate::decompress_to_vec(&stream) {
+            Ok(raw) => println!("  fdeflate:          {} bytes, sum {}", raw.len(), sum(&raw)),
+            Err(error) => {
+                println!("  fdeflate:          error {error:?}");
+                ok = false;
+            }
+        }
+        match decode_tile(&bytes, "png") {
+            Ok(decoded) if decoded.pixels() == tile.pixels() => {
+                println!("  decode_tile:       the same pixels");
+            }
+            Ok(_) => {
+                println!("  decode_tile:       different pixels");
+                ok = false;
+            }
+            Err(error) => {
+                println!("  decode_tile:       error {error:?}");
+                ok = false;
+            }
         }
     }
 

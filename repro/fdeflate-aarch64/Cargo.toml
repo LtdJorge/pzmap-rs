@@ -9,6 +9,8 @@ png = "=0.18.0"
 fdeflate = "=0.3.7"
 simd-adler32 = "=0.3.8"
 crc32fast = "=1.5.0"
+# The crate whose doctest fails, from crates.io. Its webp feature is not needed to fail.
+pzmap2img = { version = "=0.1.0", default-features = false }
 
 # The same settings as the pzmap-rs test profile, which inherits from dev.
 [profile.mirror]
