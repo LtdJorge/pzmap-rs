@@ -12,7 +12,14 @@ targets = [
 
 [advisories]
 # Fail on any crate with a RustSec advisory, including unmaintained and unsound crates.
-ignore = []
+ignore = [
+    # zvariant, zvariant_derive and zbus_names were merged into zbus 6. They come from eframe's
+    # screen reader support on Linux, through accesskit_unix, which still requires zbus 5. Remove
+    # these when accesskit_unix moves to zbus 6.
+    { id = "RUSTSEC-2026-0370", reason = "zvariant: unmaintained, not vulnerable; accesskit_unix needs zbus 5" },
+    { id = "RUSTSEC-2026-0371", reason = "zbus_names: unmaintained, not vulnerable; accesskit_unix needs zbus 5" },
+    { id = "RUSTSEC-2026-0372", reason = "zvariant_derive: unmaintained, not vulnerable; accesskit_unix needs zbus 5" },
+]
 
 [licenses]
 # Keep this list the same as `accepted` in about.toml. Some entries match no crate today.
