@@ -20,5 +20,5 @@ The first public release.
 - Support for Build 41 and Build 42 files, chosen at compile time or at runtime.
 - Typed errors with the file format and byte offset for every malformed file, instead of panics.
 
-[Unreleased]: https://github.com/LtdJorge/pzmap-rs/compare/v0.1.0...master
-[0.1.0]: https://github.com/LtdJorge/pzmap-rs/releases/tag/v0.1.0
+[Unreleased]: https://github.com/LtdJorge/pzmap-rs/compare/libpzmap-v0.1.0...master
+[0.1.0]: https://github.com/LtdJorge/pzmap-rs/releases/tag/libpzmap-v0.1.0
