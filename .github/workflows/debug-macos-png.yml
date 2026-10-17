@@ -1,15 +1,12 @@
 name: Debug macOS PNG
 
-# Temporary. Finds the Rust nightly that broke fdeflate on Apple silicon. Push this on a branch
-# under `debug/`, not on master, and delete it once the cause is known.
+# Temporary. Checks whether the latest Rust nightly still breaks fdeflate on Apple silicon. Push
+# this on a branch under `debug/`, not on master, and delete it once the cause is known.
 #
-# Earlier runs showed that pzmap2img's `decode_tile` doctest writes or reads a broken PNG when
-# fdeflate is optimized with overflow checks on and the test profile's thin LTO. It fails with
-# Rust 1.99 and passes with Rust 1.95, so this run bisects the nightlies between them.
-# repro/fdeflate-aarch64/bisect.sh is the test run for each nightly.
-#
-# The result is at the end of the bisect step's log: the first nightly with the regression, and
-# when the CI artifacts are still available, the merged pull request that caused it.
+# The bisection found that the LLVM 23 update, rust-lang/rust#158734, broke pzmap2img's
+# `decode_tile` doctest when fdeflate is optimized with overflow checks on and the test
+# profile's thin LTO. This run builds the same doctest with today's nightly. If it fails with
+# `CorruptFlateStream`, the bug is still there. If it passes, it may be fixed upstream.
 
 on:
   push:
@@ -22,20 +19,20 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  bisect:
+  nightly:
     runs-on: macos-latest
-    timeout-minutes: 240
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # master
         with:
-          toolchain: stable
-      - name: Install cargo-bisect-rustc
-        run: cargo +stable install cargo-bisect-rustc --version 0.6.11 --locked
-      - name: Bisect
-        env:
-          # cargo-bisect-rustc asks the GitHub API which commits each nightly contains.
-          GITHUB_TOKEN: ${{ github.token }}
+          toolchain: nightly
+      - name: Toolchain
+        run: |
+          uname -m
+          rustc +nightly -vV
+      # The workspace's Cargo.toml turns off fdeflate's overflow checks as a workaround, and
+      # --config turns them back on.
+      - name: Doctest on the latest nightly
         run: >-
-          cargo +stable bisect-rustc --start 1.95.0 --end 1.99.0
-          --script repro/fdeflate-aarch64/bisect.sh
+          cargo +nightly test -p pzmap2img --doc --locked
+          --config 'profile.test.package.fdeflate.overflow-checks=true' -- decode_tile
