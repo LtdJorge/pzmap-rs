@@ -18,6 +18,11 @@
 //! The Lua files are treated as data, never run as programs. [`lua`] reads table literals and
 //! [`annotations`] looks for known calls among the tokens. This makes it safe to read maps from
 //! untrusted sources.
+//!
+//!
+//! ## Warning
+//! This module is written by AI and has had almost no review yet, apart from testing that it works
+//! on every file supported.
 
 pub mod annotations;
 pub mod lua;
