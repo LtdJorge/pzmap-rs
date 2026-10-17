@@ -1,0 +1,186 @@
+name: Release
+
+# Releases one crate. Push a tag named after the crate and its version, such as
+# `libpzmap-v0.1.0`. This workflow publishes that crate to crates.io and creates a GitHub
+# Release with the crate's changelog section as its notes.
+#
+# A version that is already on crates.io will not be published again. An existing GitHub Release
+# is left alone. So the workflow can be run again for a tag, from the Actions tab, to finish a
+# release that failed partway.
+
+on:
+  push:
+    tags:
+      - "libpzmap-v*"
+      - "pzmap2img-v*"
+      - "pzmap-tools-v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "The tag to release, such as libpzmap-v0.1.0"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+# Two runs for the same tag would race to publish it.
+concurrency:
+  group: release-${{ inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.tag.outputs.tag }}
+      crate: ${{ steps.tag.outputs.crate }}
+      version: ${{ steps.tag.outputs.version }}
+      published: ${{ steps.published.outputs.published }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: refs/tags/${{ inputs.tag || github.ref_name }}
+          # The full history, to check that the tag is on master.
+          fetch-depth: 0
+      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # master
+        with:
+          toolchain: stable
+
+      - name: Read the crate and version from the tag
+        id: tag
+        env:
+          TAG: ${{ inputs.tag || github.ref_name }}
+        run: |
+          crate=${TAG%-v*}
+          version=${TAG##*-v}
+          case "$crate" in
+            libpzmap | pzmap2img | pzmap-tools) ;;
+            *) echo "::error::$TAG does not name a crate this workflow releases"; exit 1 ;;
+          esac
+          if ! [[ $version =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "::error::$TAG does not end in a version such as -v0.1.0"
+            exit 1
+          fi
+          {
+            echo "tag=$TAG"
+            echo "crate=$crate"
+            echo "version=$version"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Check that the tag matches Cargo.toml
+        env:
+          CRATE: ${{ steps.tag.outputs.crate }}
+          VERSION: ${{ steps.tag.outputs.version }}
+        run: |
+          manifest=$(cargo metadata --no-deps --format-version 1 --locked \
+            | jq -r --arg name "$CRATE" '.packages[] | select(.name == $name) | .version')
+          if [ "$manifest" != "$VERSION" ]; then
+            echo "::error::The tag says $CRATE $VERSION, but Cargo.toml says $manifest"
+            exit 1
+          fi
+
+      - name: Check that the tag is on master
+        run: |
+          if ! git merge-base --is-ancestor HEAD origin/master; then
+            echo "::error::The tagged commit is not on master. Push master first."
+            exit 1
+          fi
+
+      # The release notes are the changelog section for this version, from its heading to the
+      # next heading or to the links at the end of the file.
+      - name: Read the release notes
+        env:
+          CRATE: ${{ steps.tag.outputs.crate }}
+          VERSION: ${{ steps.tag.outputs.version }}
+        run: |
+          awk -v heading="## [$VERSION]" '
+            index($0, heading) == 1 { found = 1; next }
+            found && (/^## \[/ || /^\[[^]]+\]: /) { exit }
+            found { print }
+          ' "crates/$CRATE/CHANGELOG.md" > notes.md
+          if ! grep -q '[^[:space:]]' notes.md; then
+            echo "::error::crates/$CRATE/CHANGELOG.md has no section for $VERSION"
+            exit 1
+          fi
+          cat notes.md
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release-notes
+          path: notes.md
+
+      - name: Check whether crates.io already has this version
+        id: published
+        env:
+          CRATE: ${{ steps.tag.outputs.crate }}
+          VERSION: ${{ steps.tag.outputs.version }}
+        run: |
+          status=$(curl -s -o /dev/null -w '%{http_code}' \
+            -A "pzmap-rs release workflow (github.com/LtdJorge/pzmap-rs)" \
+            "https://crates.io/api/v1/crates/$CRATE/$VERSION")
+          case "$status" in
+            200) echo "published=true" >> "$GITHUB_OUTPUT"; echo "$CRATE $VERSION is already on crates.io" ;;
+            404) echo "published=false" >> "$GITHUB_OUTPUT" ;;
+            *) echo "::error::crates.io answered $status"; exit 1 ;;
+          esac
+
+  publish:
+    needs: check
+    if: needs.check.outputs.published == 'false'
+    runs-on: ubuntu-latest
+    # The crates.io trusted publisher is set up for this environment. Add required reviewers to
+    # it in the repository settings to approve each publication by hand.
+    environment: crates-io
+    permissions:
+      contents: read
+      # Lets crates-io-auth-action ask crates.io for a short-lived token.
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: refs/tags/${{ needs.check.outputs.tag }}
+      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # master
+        with:
+          toolchain: stable
+      - name: Test
+        env:
+          CRATE: ${{ needs.check.outputs.crate }}
+        run: cargo test -p "$CRATE" --all-features --locked
+      - uses: rust-lang/crates-io-auth-action@c6f97d42243bad5fab37ca0427f495c86d5b1a18 # v1.0.5
+        id: auth
+      - name: Publish
+        env:
+          CRATE: ${{ needs.check.outputs.crate }}
+          CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
+        run: cargo publish -p "$CRATE"
+
+  github-release:
+    needs: [ check, publish ]
+    # Runs after a publish, or when the version was already on crates.io and publish was skipped.
+    if: ${{ !cancelled() && !failure() }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: release-notes
+      - name: Create the GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ needs.check.outputs.tag }}
+          CRATE: ${{ needs.check.outputs.crate }}
+          VERSION: ${{ needs.check.outputs.version }}
+        run: |
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            echo "A release for $TAG already exists"
+            exit 0
+          fi
+          prerelease=()
+          if [[ $VERSION == *-* ]]; then prerelease=(--prerelease); fi
+          gh release create "$TAG" --verify-tag --title "$CRATE $VERSION" --notes-file notes.md \
+            "${prerelease[@]}"
