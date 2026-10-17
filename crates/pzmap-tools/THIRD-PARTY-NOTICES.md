@@ -7,10 +7,9 @@ Each section gives a license's text and the components that use it.
 
 ## Licenses
 
-- MIT License (MIT): 303 crates
+- MIT License (MIT): 287 crates
 - Apache License 2.0 (Apache-2.0): 13 crates
 - Unicode License v3 (Unicode-3.0): 5 crates
-- Boost Software License 1.0 (BSL-1.0): 2 crates
 - ISC License (ISC): 1 crate
 - SIL Open Font License 1.1 (OFL-1.1): 1 crate
 - zlib License (Zlib): 1 crate
@@ -534,8 +533,6 @@ Used by:
 - wayland-backend 0.3.17 (https://github.com/smithay/wayland-rs)
 - wayland-client 0.31.15 (https://github.com/smithay/wayland-rs)
 - wayland-cursor 0.31.14 (https://github.com/smithay/wayland-rs)
-- wayland-protocols-experimental 20250721.0.1 (https://github.com/smithay/wayland-rs)
-- wayland-protocols-misc 0.3.12 (https://github.com/smithay/wayland-rs)
 - wayland-protocols-plasma 0.3.12 (https://github.com/smithay/wayland-rs)
 - wayland-protocols-wlr 0.3.12 (https://github.com/smithay/wayland-rs)
 - wayland-protocols 0.32.13 (https://github.com/smithay/wayland-rs)
@@ -607,35 +604,9 @@ DEALINGS IN THE SOFTWARE.
 Used by:
 
 - heck 0.5.0 (https://github.com/withoutboats/heck)
+- unicode-properties 0.1.4 (https://github.com/unicode-rs/unicode-properties)
 - unicode-segmentation 1.13.3 (https://github.com/unicode-rs/unicode-segmentation)
 - unicode-width 0.2.2 (https://github.com/unicode-rs/unicode-width)
-
-```text
-Copyright (c) 2015 The quick-error Developers
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-
-```
-
-Used by:
-
-- quick-error 2.0.1 (http://github.com/tailhook/quick-error)
 
 ```text
 Copyright (c) 2015 Victor Berger
@@ -1151,33 +1122,6 @@ Used by:
 - enumflags2 0.7.12 (https://github.com/meithecatte/enumflags2)
 
 ```text
-Copyright (c) 2018 Lucas Timmins & Victor Berger
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
-
-```
-
-Used by:
-
-- smithay-clipboard 0.7.3 (https://github.com/smithay/smithay-clipboard)
-
-```text
 Copyright (c) 2018 Raph Levien
 
 Permission is hereby granted, free of charge, to any
@@ -1337,7 +1281,6 @@ THE SOFTWARE.
 Used by:
 
 - smithay-client-toolkit 0.19.2 (https://github.com/smithay/client-toolkit)
-- smithay-client-toolkit 0.20.0 (https://github.com/smithay/client-toolkit)
 
 ```text
 Copyright (c) 2018 Victor Berger
@@ -1365,7 +1308,6 @@ THE SOFTWARE.
 Used by:
 
 - calloop 0.13.0 (https://github.com/Smithay/calloop)
-- calloop 0.14.4 (https://github.com/Smithay/calloop)
 
 ```text
 Copyright (c) 2018-2025 The rust-random Project Developers
@@ -1845,7 +1787,6 @@ THE SOFTWARE.
 Used by:
 
 - calloop-wayland-source 0.3.0 (https://github.com/smithay/calloop-wayland-source)
-- calloop-wayland-source 0.4.1 (https://github.com/smithay/calloop-wayland-source)
 
 ```text
 Copyright (c) 2023 Kirill Chibisov
@@ -1975,10 +1916,10 @@ Used by:
 - anstyle-parse 1.0.0 (https://github.com/rust-cli/anstyle.git)
 - anstyle-query 1.1.5 (https://github.com/rust-cli/anstyle.git)
 - anstyle-wincon 3.0.11 (https://github.com/rust-cli/anstyle.git)
-- anstyle 1.0.13 (https://github.com/rust-cli/anstyle.git)
-- clap 4.6.1 (https://github.com/clap-rs/clap)
-- clap_builder 4.6.0 (https://github.com/clap-rs/clap)
-- clap_derive 4.6.1 (https://github.com/clap-rs/clap)
+- anstyle 1.0.14 (https://github.com/rust-cli/anstyle.git)
+- clap 4.6.7 (https://github.com/clap-rs/clap)
+- clap_builder 4.6.7 (https://github.com/clap-rs/clap)
+- clap_derive 4.6.7 (https://github.com/clap-rs/clap)
 - clap_lex 1.1.0 (https://github.com/clap-rs/clap)
 - colorchoice 1.0.4 (https://github.com/rust-cli/anstyle.git)
 - is_terminal_polyfill 1.70.2 (https://github.com/polyfill-rs/is_terminal_polyfill)
@@ -2192,8 +2133,8 @@ DEALINGS IN THE SOFTWARE.
 
 Used by:
 
-- vello_common 0.1.0 (https://github.com/linebender/vello)
-- vello_cpu 0.1.0 (https://github.com/linebender/vello)
+- vello_common 0.2.0 (https://github.com/linebender/vello)
+- vello_cpu 0.2.0 (https://github.com/linebender/vello)
 
 ```text
 Copyright 2023 The Fuchsia Authors
@@ -2227,7 +2168,6 @@ DEALINGS IN THE SOFTWARE.
 
 Used by:
 
-- zerocopy-derive 0.8.33 (https://github.com/google/zerocopy)
 - zerocopy 0.8.33 (https://github.com/google/zerocopy)
 
 ```text
@@ -2270,21 +2210,6 @@ The above is the version of the MIT "Expat" License used by X.org:
 Used by:
 
 - wayland-protocols 0.32.13 (https://github.com/smithay/wayland-rs)
-
-```text
-Copyright © 2021 The pdf-rs contributers.
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-```
-
-Used by:
-
-- fax 0.2.7 (https://github.com/pdf-rs/fax)
 
 ```text
 Copyright © 2022 Kirill Chibisov
@@ -2400,35 +2325,6 @@ Used by:
 - darling 0.24.1 (https://github.com/TedDriggs/darling)
 - darling_core 0.24.1 (https://github.com/TedDriggs/darling)
 - darling_macro 0.24.1 (https://github.com/TedDriggs/darling)
-
-```text
-MIT License
-
-Copyright (c) 2018 PistonDevelopers
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-
-```
-
-Used by:
-
-- tiff 0.10.3 (https://github.com/image-rs/image-tiff)
 
 ```text
 MIT License
@@ -2684,35 +2580,6 @@ Used by:
 ```text
 MIT License
 
-Copyright (c) 2022 The Arboard contributors
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-
-```
-
-Used by:
-
-- arboard 3.6.1 (https://github.com/1Password/arboard)
-
-```text
-MIT License
-
 Copyright (c) 2023 dAxpeDDa
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -2851,38 +2718,33 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 Used by these crates, which ship no license file, so the text above is the standard MIT
 text. The authors listed with each crate hold its copyright.
 
-- accesskit 0.24.1 (https://github.com/AccessKit/accesskit), by The AccessKit contributors
-- accesskit_atspi_common 0.18.1 (https://github.com/AccessKit/accesskit), by The AccessKit contributors
-- accesskit_consumer 0.35.0 (https://github.com/AccessKit/accesskit), by The AccessKit contributors
-- accesskit_consumer 0.36.0 (https://github.com/AccessKit/accesskit), by The AccessKit contributors
-- accesskit_consumer 0.38.0 (https://github.com/AccessKit/accesskit), by The AccessKit contributors
-- accesskit_macos 0.26.3 (https://github.com/AccessKit/accesskit), by The AccessKit contributors
-- accesskit_unix 0.21.1 (https://github.com/AccessKit/accesskit), by The AccessKit contributors
-- accesskit_windows 0.32.1 (https://github.com/AccessKit/accesskit), by The AccessKit contributors
+- accesskit 0.25.1 (https://github.com/AccessKit/accesskit), by The AccessKit contributors
+- accesskit_atspi_common 0.21.0 (https://github.com/AccessKit/accesskit), by The AccessKit contributors
+- accesskit_consumer 0.39.1 (https://github.com/AccessKit/accesskit), by The AccessKit contributors
+- accesskit_macos 0.27.1 (https://github.com/AccessKit/accesskit), by The AccessKit contributors
+- accesskit_unix 0.24.0 (https://github.com/AccessKit/accesskit), by The AccessKit contributors
+- accesskit_windows 0.35.1 (https://github.com/AccessKit/accesskit), by The AccessKit contributors
 - block2 0.5.1 (https://github.com/madsmtm/objc2), by Steven Sheldon, Mads Marquart <mads@marquart.dk>
 - block2 0.6.2 (https://github.com/madsmtm/objc2), by Mads Marquart <mads@marquart.dk>
 - dispatch2 0.3.1 (https://github.com/madsmtm/objc2), by Mads Marquart <mads@marquart.dk>, Mary <mary@mary.zone>
 - dispatch 0.2.0 (http://github.com/SSheldon/rust-dispatch), by Steven Sheldon
-- ecolor 0.36.2 (https://github.com/emilk/egui), by Emil Ernerfeldt <emil.ernerfeldt@gmail.com>, Andreas Reich <reichandreas@gmx.de>
-- eframe 0.36.2 (https://github.com/emilk/egui/tree/main/crates/eframe), by Emil Ernerfeldt <emil.ernerfeldt@gmail.com>
-- egui-winit 0.36.2 (https://github.com/emilk/egui/tree/main/crates/egui-winit), by Emil Ernerfeldt <emil.ernerfeldt@gmail.com>
-- egui 0.36.2 (https://github.com/emilk/egui), by Emil Ernerfeldt <emil.ernerfeldt@gmail.com>
-- egui_glow 0.36.2 (https://github.com/emilk/egui/tree/main/crates/egui_glow), by Emil Ernerfeldt <emil.ernerfeldt@gmail.com>
-- emath 0.36.2 (https://github.com/emilk/egui/tree/main/crates/emath), by Emil Ernerfeldt <emil.ernerfeldt@gmail.com>
-- epaint 0.36.2 (https://github.com/emilk/egui/tree/main/crates/epaint), by Emil Ernerfeldt <emil.ernerfeldt@gmail.com>
+- ecolor 0.37.0 (https://github.com/emilk/egui), by Emil Ernerfeldt <emil.ernerfeldt@gmail.com>, Andreas Reich <reichandreas@gmx.de>
+- eframe 0.37.0 (https://github.com/emilk/egui/tree/main/crates/eframe), by Emil Ernerfeldt <emil.ernerfeldt@gmail.com>
+- egui-winit 0.37.0 (https://github.com/emilk/egui/tree/main/crates/egui-winit), by Emil Ernerfeldt <emil.ernerfeldt@gmail.com>
+- egui 0.37.0 (https://github.com/emilk/egui), by Emil Ernerfeldt <emil.ernerfeldt@gmail.com>
+- egui_glow 0.37.0 (https://github.com/emilk/egui/tree/main/crates/egui_glow), by Emil Ernerfeldt <emil.ernerfeldt@gmail.com>
+- emath 0.37.0 (https://github.com/emilk/egui/tree/main/crates/emath), by Emil Ernerfeldt <emil.ernerfeldt@gmail.com>
+- epaint 0.37.0 (https://github.com/emilk/egui/tree/main/crates/epaint), by Emil Ernerfeldt <emil.ernerfeldt@gmail.com>
 - objc-sys 0.3.5 (https://github.com/madsmtm/objc2), by Mads Marquart <mads@marquart.dk>
 - objc2-app-kit 0.2.2 (https://github.com/madsmtm/objc2)
 - objc2-app-kit 0.3.2 (https://github.com/madsmtm/objc2)
 - objc2-core-foundation 0.3.2 (https://github.com/madsmtm/objc2)
-- objc2-core-graphics 0.3.2 (https://github.com/madsmtm/objc2)
 - objc2-encode 4.1.0 (https://github.com/madsmtm/objc2), by Mads Marquart <mads@marquart.dk>
 - objc2-foundation 0.2.2 (https://github.com/madsmtm/objc2)
 - objc2-foundation 0.3.2 (https://github.com/madsmtm/objc2)
 - objc2 0.5.2 (https://github.com/madsmtm/objc2), by Steven Sheldon, Mads Marquart <mads@marquart.dk>
 - objc2 0.6.4 (https://github.com/madsmtm/objc2), by Mads Marquart <mads@marquart.dk>
 - profiling 1.0.18 (https://github.com/aclysma/profiling), by Philip Degarmo <aclysma@gmail.com>
-- zune-core 0.4.12
-- zune-jpeg 0.4.21 (https://github.com/etemesi254/zune-image/tree/dev/crates/zune-jpeg), by caleb <etemesicaleb@gmail.com>
 
 ```text
 MIT License
@@ -3010,7 +2872,7 @@ DEALINGS IN THE SOFTWARE.
 Used by:
 
 - fdeflate 0.3.7 (https://github.com/image-rs/fdeflate)
-- image 0.25.9 (https://github.com/image-rs/image)
+- image 0.25.10 (https://github.com/image-rs/image)
 
 ```text
 MIT License
@@ -3038,7 +2900,6 @@ SOFTWARE.
 Used by:
 
 - color 0.3.3 (https://github.com/linebender/color)
-- half 2.7.1 (https://github.com/VoidStarKat/half-rs)
 - ident_case 1.0.1 (https://github.com/TedDriggs/ident_case)
 - linebender_resource_handle 0.1.1 (https://github.com/linebender/raw_resource_handle)
 
@@ -3195,7 +3056,7 @@ Used by:
 - serde 1.0.228 (https://github.com/serde-rs/serde)
 - serde_core 1.0.228 (https://github.com/serde-rs/serde)
 - serde_derive 1.0.228 (https://github.com/serde-rs/serde)
-- serde_json 1.0.140 (https://github.com/serde-rs/json)
+- serde_json 1.0.154 (https://github.com/serde-rs/json)
 - serde_repr 0.1.21 (https://github.com/dtolnay/serde-repr)
 - smol_str 0.2.2 (https://github.com/rust-analyzer/smol_str)
 - syn 2.0.117 (https://github.com/dtolnay/syn)
@@ -3208,6 +3069,7 @@ Used by:
 - x11-dl 2.21.0 (https://github.com/AltF02/x11-rs.git)
 - zbus-lockstep-macros 0.5.2 (https://github.com/luukvanderduim/zbus-lockstep)
 - zbus-lockstep 0.5.2 (https://github.com/luukvanderduim/zbus-lockstep)
+- zmij 1.0.23 (https://github.com/dtolnay/zmij)
 - zvariant_utils 4.2.0 (https://github.com/z-galaxy/zbus/)
 
 ```text
@@ -3377,10 +3239,10 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 Used by:
 
-- phf 0.13.1 (https://github.com/rust-phf/rust-phf)
-- phf_generator 0.13.1 (https://github.com/rust-phf/rust-phf)
-- phf_macros 0.13.1 (https://github.com/rust-phf/rust-phf)
-- phf_shared 0.13.1 (https://github.com/rust-phf/rust-phf)
+- phf 0.14.0 (https://github.com/rust-phf/rust-phf)
+- phf_generator 0.14.0 (https://github.com/rust-phf/rust-phf)
+- phf_macros 0.14.0 (https://github.com/rust-phf/rust-phf)
+- phf_shared 0.14.0 (https://github.com/rust-phf/rust-phf)
 
 ```text
 The MIT License (MIT)
@@ -3721,36 +3583,6 @@ Used by:
 ```text
 The MIT License (MIT)
 
-Copyright (c) HeroicKatora 2020
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-
-
-```
-
-Used by:
-
-- weezl 0.1.12 (https://github.com/image-rs/weezl)
-
-```text
-The MIT License (MIT)
-
 Copyright (c) 2016 Johann Tuffe
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -4047,7 +3879,7 @@ Used by:
 
 Used by:
 
-- moxcms 0.7.11 (https://github.com/awxkee/moxcms.git)
+- moxcms 0.8.1 (https://github.com/awxkee/moxcms.git)
 - pxfm 0.1.27 (https://github.com/awxkee/pxfm)
 
 ```text
@@ -5362,7 +5194,7 @@ limitations under the License.
 Used by these crates, which ship no license file, so the text above is the standard Apache-2.0
 text. The authors listed with each crate hold its copyright.
 
-- accesskit_winit 0.32.2 (https://github.com/AccessKit/accesskit), by The AccessKit contributors
+- accesskit_winit 0.34.1 (https://github.com/AccessKit/accesskit), by The AccessKit contributors
 
 ## Unicode License v3
 
@@ -5469,55 +5301,6 @@ Used by:
 - yoke 0.8.3 (https://github.com/unicode-org/icu4x)
 - zerofrom-derive 0.1.7 (https://github.com/unicode-org/icu4x)
 - zerofrom 0.1.8 (https://github.com/unicode-org/icu4x)
-
-## Boost Software License 1.0
-
-```text
-Boost Software License - Version 1.0 - August 17th, 2003
-
-Permission is hereby granted, free of charge, to any person or organization
-obtaining a copy of the software and accompanying documentation covered by
-this license (the "Software") to use, reproduce, display, distribute,
-execute, and transmit the Software, and to prepare derivative works of the
-Software, and to permit third-parties to whom the Software is furnished to
-do so, all subject to the following:
-
-The copyright notices in the Software and this entire statement, including
-the above license grant, this restriction and the following disclaimer,
-must be included in all copies of the Software, in whole or in part, and
-all derivative works of the Software, unless such copies or derivative
-works are solely in the form of machine-executable object code generated by
-a source language processor.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE, TITLE AND NON-INFRINGEMENT. IN NO EVENT
-SHALL THE COPYRIGHT HOLDERS OR ANYONE DISTRIBUTING THE SOFTWARE BE LIABLE
-FOR ANY DAMAGES OR OTHER LIABILITY, WHETHER IN CONTRACT, TORT OR OTHERWISE,
-ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-
-```
-
-Used by:
-
-- error-code 3.4.0 (https://github.com/DoumanAsh/error-code)
-
-```text
-Boost Software License - Version 1.0 - August 17th, 2003
-
-Permission is hereby granted, free of charge, to any person or organization obtaining a copy of the software and accompanying documentation covered by this license (the "Software") to use, reproduce, display, distribute, execute, and transmit the Software, and to prepare derivative works of the Software, and to permit third-parties to whom the Software is furnished to do so, all subject to the following:
-
-The copyright notices in the Software and this entire statement, including the above license grant, this restriction and the following disclaimer, must be included in all copies of the Software, in whole or in part, and all derivative works of the Software, unless such copies or derivative works are solely in the form of machine-executable object code generated by a source language processor.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE COPYRIGHT HOLDERS OR ANYONE DISTRIBUTING THE SOFTWARE BE LIABLE FOR ANY DAMAGES OR OTHER LIABILITY, WHETHER IN CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-```
-
-Used by these crates, which ship no license file, so the text above is the standard BSL-1.0
-text. The authors listed with each crate hold its copyright.
-
-- clipboard-win 5.4.1 (https://github.com/DoumanAsh/clipboard-win), by Douman <douman@gmx.se>
 
 ## ISC License
 
