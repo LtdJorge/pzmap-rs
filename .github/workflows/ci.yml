@@ -150,9 +150,11 @@ jobs:
         with:
           toolchain: stable
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
-      # Without PZ_INSTALL_DIR, the tests that read game files are skipped.
+      # Without PZ_INSTALL_DIR, the tests that read game files are skipped. A Gradle daemon left
+      # running keeps its cache files locked on Windows, and setup-java then fails to save the
+      # cache, so Gradle runs without one.
       - name: Test
-        run: ./gradlew test
+        run: ./gradlew test --no-daemon
 
   python:
     strategy:
