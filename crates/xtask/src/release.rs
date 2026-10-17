@@ -1,4 +1,4 @@
-//! Releases the crates published to crates.io.
+//! Releases the crates published to crates.io and PyPI.
 //!
 //! A release is a tag named after the crate and its version, such as `libpzmap-v0.1.0`.
 //! Pushing the tag runs `.github/workflows/release.yml`, which publishes the crate and creates
@@ -39,8 +39,30 @@ use crate::{
     version::Version,
 };
 
-/// The crates that `release.yml` publishes. Its tag patterns list the same crates.
-const CRATES: [&str; 3] = ["libpzmap", "pzmap2img", "pzmap-tools"];
+/// Where a crate is published.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum Registry {
+    CratesIo,
+    /// PyPI, under the given project name.
+    PyPi(&'static str),
+}
+
+impl Registry {
+    fn name(self) -> &'static str {
+        match self {
+            Registry::CratesIo => "crates.io",
+            Registry::PyPi(_) => "PyPI",
+        }
+    }
+}
+
+/// The crates that `release.yml` publishes, and where. Its tag patterns list the same crates.
+const RELEASED: [(&str, Registry); 4] = [
+    ("libpzmap", Registry::CratesIo),
+    ("pzmap2img", Registry::CratesIo),
+    ("pzmap-tools", Registry::CratesIo),
+    ("pzmap-python", Registry::PyPi("pzmap")),
+];
 
 /// The GitHub environment that the crates.io trusted publishers are set up for.
 const ENVIRONMENT: &str = "crates-io";
@@ -154,11 +176,47 @@ impl Tools {
     }
 
     fn package(&self, krate: &str) -> Result<Package> {
-        require_released_crate(krate)?;
+        registry(krate)?;
         self.packages()?
             .into_iter()
             .find(|package| package.name == krate)
             .ok_or_else(|| anyhow!("the workspace has no crate named {krate}"))
+    }
+
+    /// The newest version of `krate` where it is published, or `None` if it was never published.
+    fn published_version(&self, krate: &str) -> Result<Option<Version>> {
+        match registry(krate)? {
+            Registry::CratesIo => self.crates_io_version(krate),
+            Registry::PyPi(project) => self.pypi_version(project),
+        }
+    }
+
+    /// The newest version of `project` on PyPI, or `None` if it was never published.
+    fn pypi_version(&self, project: &str) -> Result<Option<Version>> {
+        // `-w` adds the HTTP status on a line of its own after the body.
+        let output = capture(self.command("curl").args([
+            "--silent",
+            "--show-error",
+            "--user-agent",
+            "pzmap-rs xtask (github.com/LtdJorge/pzmap-rs)",
+            "--write-out",
+            "\n%{http_code}",
+            &format!("https://pypi.org/pypi/{project}/json"),
+        ]))
+        .context("cannot ask PyPI for the published versions")?;
+        let (body, status) = output.rsplit_once('\n').unwrap_or(("", &output));
+        match status {
+            "404" => return Ok(None),
+            "200" => {}
+            _ => bail!("PyPI answered {status} for {project}"),
+        }
+        let json: serde_json::Value =
+            serde_json::from_str(body).context("cannot parse PyPI's answer")?;
+        let version = json
+            .pointer("/info/version")
+            .and_then(serde_json::Value::as_str)
+            .ok_or_else(|| anyhow!("PyPI's answer for {project} has no version"))?;
+        Ok(Some(Version::from_pep440(version)?))
     }
 
     /// The newest version of `krate` on crates.io, or `None` if it was never published.
@@ -282,14 +340,18 @@ fn gh_installed() -> bool {
     succeeds(Command::new("gh").arg("--version")).unwrap_or(false)
 }
 
-fn require_released_crate(krate: &str) -> Result<()> {
-    if !CRATES.contains(&krate) {
-        bail!(
-            "{krate} is not released through crates.io; the crates are {}",
-            CRATES.join(", ")
-        );
+/// Where `krate` is published. Fails for a crate that the release workflow does not publish.
+fn registry(krate: &str) -> Result<Registry> {
+    match RELEASED.iter().find(|(name, _)| *name == krate) {
+        Some((_, registry)) => Ok(*registry),
+        None => {
+            let names: Vec<&str> = RELEASED.iter().map(|(name, _)| *name).collect();
+            bail!(
+                "{krate} is not released by the release workflow; the crates are {}",
+                names.join(", ")
+            )
+        }
     }
-    Ok(())
 }
 
 /// Asks a yes or no question, with no as the answer when there is no terminal to ask.
@@ -309,7 +371,7 @@ fn confirm(question: &str) -> Result<bool> {
 pub(crate) fn status(krate: Option<&str>) -> Result<()> {
     let tools = Tools::new()?;
     if let Some(krate) = krate {
-        require_released_crate(krate)?;
+        registry(krate)?;
     }
     if tools
         .git(&["fetch", "--quiet", "--tags", "origin"])
@@ -321,7 +383,7 @@ pub(crate) fn status(krate: Option<&str>) -> Result<()> {
     let mut first = true;
     for package in packages
         .iter()
-        .filter(|package| CRATES.contains(&package.name.as_str()))
+        .filter(|package| registry(&package.name).is_ok())
         .filter(|package| krate.is_none_or(|krate| package.name == krate))
     {
         if !first {
@@ -339,7 +401,8 @@ fn print_status(tools: &Tools, package: &Package) -> Result<()> {
     let tags = tools.git(&["tag", "--list", &pattern, "--sort=-v:refname"])?;
     let last_tag = tags.lines().next();
     let tagged = tags.lines().any(|tag| tag == package.tag());
-    let published = tools.crates_io_version(name)?;
+    let registry = registry(name)?;
+    let published = tools.published_version(name)?;
     let release = match last_tag {
         Some(tag) => match tools.gh(&["release", "view", tag, "--json", "url"]) {
             Ok(_) => "yes",
@@ -357,14 +420,16 @@ fn print_status(tools: &Tools, package: &Package) -> Result<()> {
         }
         None => None,
     };
-    let entries = changelog::count_entries(&read_text(&package.changelog()?)?, "Unreleased");
+    let changelog_text = read_text(&package.changelog()?)?;
+    let entries = changelog::count_entries(&changelog_text, "Unreleased");
 
     println!("{name}");
     println!("  version in Cargo.toml   {}", package.version);
     println!("  latest tag              {}", last_tag.unwrap_or("none"));
     let published_text = published.as_ref().map(ToString::to_string);
     println!(
-        "  on crates.io            {}",
+        "  {:<24}{}",
+        format!("on {}", registry.name()),
         published_text.as_deref().unwrap_or("not published")
     );
     println!("  GitHub Release          {release}");
@@ -375,19 +440,31 @@ fn print_status(tools: &Tools, package: &Package) -> Result<()> {
 
     let next = if !tagged {
         match &published {
-            None => format!("first release, published by hand: just release-first {name}"),
+            None if !changelog::has_entries(&changelog_text, &package.version.to_string()) => {
+                format!(
+                    "first release: just release-prepare {name} {}, then follow its steps",
+                    package.version
+                )
+            }
+            None if registry == Registry::CratesIo => {
+                format!("first release, published by hand: just release-first {name}")
+            }
+            None => format!(
+                "first release, which the release workflow publishes: just release-tag {name}"
+            ),
             Some(published) => match published.cmp_release(&package.version) {
                 Ordering::Equal => format!(
-                    "{} is on crates.io but not tagged: just release-tag {name}",
-                    package.version
+                    "{} is on {} but not tagged: just release-tag {name}",
+                    package.version,
+                    registry.name()
                 ),
                 Ordering::Less => format!(
                     "{} is prepared: push master, wait for CI, then just release-tag {name}",
                     package.version
                 ),
                 Ordering::Greater => format!(
-                    "crates.io has {published}, newer than Cargo.toml; check that master is up \
-                     to date"
+                    "{} has {published}, newer than Cargo.toml; check that master is up to date",
+                    registry.name()
                 ),
             },
         }
@@ -480,23 +557,26 @@ pub(crate) fn prepare(krate: &str, version: &str) -> Result<()> {
     let package = tools.package(krate)?;
     tools.require_clean_master()?;
 
-    if version.cmp_release(&package.version) != Ordering::Greater {
-        bail!(
-            "{krate} is at {}; the new version must be newer",
-            package.version
-        );
-    }
     let tag = tag_name(krate, &version);
     if tools.tag_exists_locally(&tag)? {
         bail!("the tag {tag} already exists");
     }
 
-    // The last release is the current version, if the changelog has a section for it.
+    // The current version was released if the changelog has a section for it. If it has none,
+    // this is the crate's first release, and it can keep its current version.
     let changelog_path = package.changelog()?;
     let changelog_text = read_text(&changelog_path)?;
-    let previous = changelog::section(&changelog_text, &package.version.to_string())
-        .is_some()
-        .then_some(&package.version);
+    let current_released =
+        changelog::section(&changelog_text, &package.version.to_string()).is_some();
+    match version.cmp_release(&package.version) {
+        Ordering::Greater => {}
+        Ordering::Equal if !current_released => {}
+        _ => bail!(
+            "{krate} is at {}; the new version must be newer",
+            package.version
+        ),
+    }
+    let previous = current_released.then_some(&package.version);
     let new_changelog = changelog::release(&changelog_text, krate, &version, previous, &today())?;
     let new_manifest = set_package_version(&read_text(&package.manifest)?, &version)
         .with_context(|| format!("cannot update {}", package.manifest.display()))?;
@@ -586,8 +666,11 @@ pub(crate) fn tag(krate: &str) -> Result<()> {
         bail!("the tag {tag} is already on GitHub");
     }
     require_changelog_release(&package)?;
-    let published = tools.crates_io_version(krate)?;
-    if published.is_none() {
+    let registry = registry(krate)?;
+    let published = tools.published_version(krate)?;
+    // crates.io only lets the workflow publish a crate that exists. PyPI's pending publisher
+    // lets it publish the first version too.
+    if published.is_none() && registry == Registry::CratesIo {
         bail!(
             "{krate} is not on crates.io yet, and the workflow cannot publish a crate the first \
              time; run `just release-first {krate}`"
@@ -606,13 +689,14 @@ pub(crate) fn tag(krate: &str) -> Result<()> {
     let already = published.as_ref() == Some(version);
     if already {
         println!(
-            "{krate} {version} is already on crates.io, so the workflow only creates the GitHub \
-             Release."
+            "{krate} {version} is already on {}, so the workflow only creates the GitHub Release.",
+            registry.name()
         );
     } else {
         println!(
-            "Pushing the tag publishes {krate} {version} to crates.io. A published version cannot \
-             be replaced, only yanked."
+            "Pushing the tag publishes {krate} {version} to {}. A published version cannot be \
+             replaced, only yanked.",
+            registry.name()
         );
     }
     if !confirm(&format!("Push {tag} to GitHub?"))? {
@@ -636,6 +720,13 @@ pub(crate) fn first(krate: &str) -> Result<()> {
     let tools = Tools::new()?;
     let package = tools.package(krate)?;
     let version = &package.version;
+    if registry(krate)? != Registry::CratesIo {
+        bail!(
+            "{krate} goes to {}, where the release workflow can publish the first version too; \
+             run `just release-tag {krate}`",
+            registry(krate)?.name()
+        );
+    }
     tools.require_clean_master()?;
 
     if let Some(published) = tools.crates_io_version(krate)? {

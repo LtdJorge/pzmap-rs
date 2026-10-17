@@ -79,6 +79,31 @@ impl Version {
             })
     }
 
+    /// Reads a version as PyPI writes it, where `1.0.0-rc.1` is `1.0.0rc1`.
+    ///
+    /// Only the forms that the release workflow produces are accepted: a plain version, or one
+    /// followed by `a`, `b` or `rc` and a number.
+    pub(crate) fn from_pep440(text: &str) -> Result<Self> {
+        let split = text
+            .find(|c: char| c.is_ascii_alphabetic())
+            .unwrap_or(text.len());
+        let (numbers, rest) = text.split_at(split);
+        if rest.is_empty() {
+            return numbers.parse();
+        }
+        let digits = rest.trim_start_matches(|c: char| c.is_ascii_alphabetic());
+        let label = match rest.get(..rest.len() - digits.len()) {
+            Some("a") => "alpha",
+            Some("b") => "beta",
+            Some("rc") => "rc",
+            _ => bail!("{text:?} is not a version this workflow publishes to PyPI"),
+        };
+        if digits.is_empty() || !digits.bytes().all(|byte| byte.is_ascii_digit()) {
+            bail!("{text:?} is not a version this workflow publishes to PyPI");
+        }
+        format!("{numbers}-{label}.{digits}").parse()
+    }
+
     /// Whether a dependency written as `version = "<requirement>"` accepts this version.
     ///
     /// Cargo reads such a requirement as `^<requirement>`. It accepts newer versions up to the
@@ -128,6 +153,24 @@ mod tests {
             "0..1",
         ] {
             assert!(bad.parse::<Version>().is_err(), "{bad} parsed");
+        }
+    }
+
+    #[test]
+    fn reads_pypi_versions() {
+        assert_eq!(Version::from_pep440("0.1.0").unwrap(), v("0.1.0"));
+        assert_eq!(Version::from_pep440("1.0.0rc1").unwrap(), v("1.0.0-rc.1"));
+        assert_eq!(Version::from_pep440("1.0.0a2").unwrap(), v("1.0.0-alpha.2"));
+        assert_eq!(Version::from_pep440("1.0.0b0").unwrap(), v("1.0.0-beta.0"));
+        for bad in [
+            "1.0.0.post1",
+            "1.0.0.dev1",
+            "1.0.0rc",
+            "1!1.0.0",
+            "1.0.0+local",
+            "1.0",
+        ] {
+            assert!(Version::from_pep440(bad).is_err(), "{bad} parsed");
         }
     }
 

@@ -121,18 +121,21 @@ excerpts used in tests. Build test inputs by hand in the test, or read them from
 
 This section is for maintainers. Each crate is released on its own, from `master`, with a tag
 named after the crate and its version, such as `libpzmap-v0.2.0`. Pushing the tag runs
-`.github/workflows/release.yml`, which publishes the crate to crates.io and creates a GitHub
-Release from its changelog section. For now this covers libpzmap, pzmap2img and pzmap-tools.
+`.github/workflows/release.yml`, which publishes the crate and creates a GitHub Release from
+its changelog section. libpzmap, pzmap2img and pzmap-tools go to crates.io. pzmap-python goes to
+PyPI as the `pzmap` project, with a wheel for each platform and a source distribution. The
+workflow tests each wheel before publishing. pzmap-java is not released yet.
 
 The `just` commands below check each step before taking it, and print the next one.
 
-1. `just release-status` shows each crate's version, tag, crates.io version and GitHub
-   Release, and what to do next.
+1. `just release-status` shows each crate's version, tag, published version and GitHub Release,
+   and what to do next.
 2. `just release-prepare <crate> <version>` bumps the crate's version, moves its
    `[Unreleased]` entries under a heading for the new version, and updates the changelog's
    links, `Cargo.lock` and the notices. If other crates require a version the new one does not
    satisfy, it raises their requirement too, and those crates need a release after this one.
-   Then it runs `just check`.
+   Then it runs `just check`. For a crate's first release, give its current version, and only
+   the changelog changes.
 3. Review and commit the changes, push `master`, and wait for CI to pass.
 4. `just release-tag <crate>` checks that the commit is on GitHub, that CI passed for it and
    that the changelog is complete. Then it tags the commit and asks before pushing the tag.
@@ -140,6 +143,8 @@ The `just` commands below check each step before taking it, and print the next o
 crates.io only lets a workflow publish a crate that already exists. So the first version of a
 new crate is published by hand with `just release-first <crate>`, which then explains how to
 add the crate's trusted publisher. After that, `just release-tag` creates its GitHub Release.
+PyPI has no such limit: its trusted publisher can be set up before the project exists, so the
+workflow publishes pzmap-python's first version too.
 
 A published version cannot be replaced, only yanked. If a release fails before it publishes,
 `just release-status` explains what went wrong and how to retry.
