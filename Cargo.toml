@@ -39,6 +39,15 @@ cast_possible_wrap = "deny"
 lto = "thin"
 opt-level = 3
 
+# On Apple silicon, fdeflate built with optimizations and overflow checks writes or reads PNG data
+# wrongly, and PNG tiles fail to decode. Without overflow checks it works. fdeflate forbids unsafe
+# code, so the checks only catch bugs in it, and a normal release build has none.
+[profile.test.package.fdeflate]
+overflow-checks = false
+
+[profile.release.package.fdeflate]
+overflow-checks = false
+
 [profile.release]
 debug = 1
 lto = "fat"
