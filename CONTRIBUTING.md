@@ -122,8 +122,8 @@ A pull request should:
 
 - pass `cargo +nightly fmt --check`, `cargo clippy --all-targets` and `cargo test`;
 - add tests for the new behavior;
-- add a line to the `[Unreleased]` section of [CHANGELOG.md](CHANGELOG.md) when users would
-  notice the change.
+- add a line to the `[Unreleased]` section of the changed crate's `CHANGELOG.md` if users
+  would notice the change.
 
 Report security problems privately, as described in [SECURITY.md](SECURITY.md), not in a public
 issue.

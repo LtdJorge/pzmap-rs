@@ -10,7 +10,7 @@ repository = "https://github.com/LtdJorge/pzmap-rs"
 keywords = ["projectzomboid", "parser", "gamedev", "map"]
 categories = ["parser-implementations", "game-development"]
 readme = "README.md"
-include = ["src/**/*.rs", "examples/**/*.rs", "README.md", "LICENSE-MIT", "LICENSE-APACHE"]
+include = ["src/**/*.rs", "examples/**/*.rs", "README.md", "CHANGELOG.md", "LICENSE-MIT", "LICENSE-APACHE"]
 
 [dependencies]
 thiserror = { workspace = true }

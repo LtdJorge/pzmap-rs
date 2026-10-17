@@ -66,7 +66,7 @@ with pytest, as described in [CONTRIBUTING.md](CONTRIBUTING.md).
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for how to build, test and propose changes. To report a
-security problem, see [SECURITY.md](SECURITY.md). Changes between releases are listed in
+security problem, see [SECURITY.md](SECURITY.md). Each crate has its own changelog, listed in
 [CHANGELOG.md](CHANGELOG.md).
 
 ## Thanks
