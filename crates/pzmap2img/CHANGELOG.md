@@ -7,6 +7,8 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-10-17
+
 The first public release.
 
 ### Added
@@ -16,6 +18,6 @@ The first public release.
 - The `pzmap2img` command-line tool, with the `build`, `plan` and `render` commands.
 - WebP and PNG tiles, lossless or lossy.
 - Vegetation options: season, snow, flowers, and tree sizes.
-- Memory limits for both phases, and a free disk space check before rendering.
+- Memory limits for both phases and a free disk space check before rendering.
 
 [Unreleased]: https://github.com/LtdJorge/pzmap-rs/commits/master/crates/pzmap2img
