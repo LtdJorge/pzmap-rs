@@ -1,0 +1,28 @@
+[package]
+name = "libpzmap"
+version = "0.1.0"
+authors = ["Jorge López <jorgekq@hotmail.es>"]
+edition = "2024"
+rust-version = "1.88"
+license = "MIT OR Apache-2.0"
+description = "Parsers for Project Zomboid's on-disk map formats: lotheader, lotpack, texture packs and map sidecars."
+repository = "https://github.com/LtdJorge/pzmap-rs"
+keywords = ["projectzomboid", "parser", "gamedev", "map"]
+categories = ["parser-implementations", "game-development"]
+readme = "README.md"
+include = ["src/**/*.rs", "examples/**/*.rs", "README.md", "LICENSE-MIT", "LICENSE-APACHE"]
+
+[dependencies]
+thiserror = { workspace = true }
+ahash = { workspace = true }
+tracing = { workspace = true }
+quick-xml = "0.42"
+serde_json = { workspace = true }
+yoke = { version = "0.8.3", features = ["derive"] }
+
+[dev-dependencies]
+anyhow = { workspace = true }
+tempfile = "3"
+
+[lints]
+workspace = true

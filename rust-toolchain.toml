@@ -1,0 +1,5 @@
+# Stable Rust is enough. `div_ceil` is stable only for unsigned integers, so signed divisions use
+# the helpers in `pzmap2img::math` instead.
+[toolchain]
+channel = "stable"
+components = ["rustfmt", "clippy"]
