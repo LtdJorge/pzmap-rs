@@ -63,19 +63,12 @@ fn harness(path: &Path) -> Harness<'static, PackView> {
 
 /// Shows `app` with the window's font installed.
 ///
-/// The harness draws its first frames before the font can be installed, and egui has no font of
-/// its own here. So the harness starts on an empty window, and `app` replaces it once the font
-/// is in place. Otherwise windows such as the picker keep the sizes they had without any text.
+/// egui has no font of its own here, so the font must be in place before the first frame.
 fn harness_for(app: PackView) -> Harness<'static, PackView> {
     let mut harness = Harness::builder()
         .with_size([1000.0, 700.0])
-        .build_ui_state(
-            |ui, app: &mut PackView| app.show(ui),
-            PackView::empty(String::new()),
-        );
-    install_fonts(&harness.ctx);
-    harness.run();
-    *harness.state_mut() = app;
+        .with_context_setup(install_fonts)
+        .build_ui_state(|ui, app: &mut PackView| app.show(ui), app);
     harness.run();
     harness
 }
