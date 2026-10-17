@@ -1,0 +1,15 @@
+[package]
+name = "xtask"
+version = "0.0.0"
+edition = "2024"
+rust-version.workspace = true
+license = "MIT OR Apache-2.0"
+description = "Maintenance tasks for the pzmap-rs workspace. Run them with `cargo run -p xtask`."
+publish = false
+
+[dependencies]
+anyhow = { workspace = true }
+serde_json = { workspace = true }
+
+[lints]
+workspace = true

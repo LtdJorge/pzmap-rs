@@ -1,0 +1,40 @@
+{{!--
+  The cargo-about template for the THIRD-PARTY-NOTICES.md files. The notices task in
+  crates/xtask adds the title above this part and the notices cargo-about cannot see below it.
+
+  Each license gets one section. A crate's license text often carries its own copyright line,
+  so a section can hold several texts, each followed by the crates it covers.
+--}}
+## Licenses
+
+{{#each overview}}
+- {{name}} ({{id}}): {{count}} {{#if (eq count 1)}}crate{{else}}crates{{/if}}
+{{/each}}
+
+{{#each overview}}
+## {{name}}
+
+{{#each indices}}
+{{#with (lookup ../../licenses this)}}
+```text
+{{{text}}}
+```
+
+{{#if source_path}}
+Used by:
+
+{{#each used_by}}
+- {{crate.name}} {{crate.version}}{{#if crate.repository}} ({{{crate.repository}}}){{/if}}
+{{/each}}
+{{else}}
+Used by these crates, which ship no license file, so the text above is the standard {{id}}
+text. The authors listed with each crate hold its copyright.
+
+{{#each used_by}}
+- {{crate.name}} {{crate.version}}{{#if crate.repository}} ({{{crate.repository}}}){{/if}}{{#if crate.authors}}, by {{#each crate.authors}}{{#unless @first}}, {{/unless}}{{{this}}}{{/each}}{{/if}}
+{{/each}}
+{{/if}}
+
+{{/with}}
+{{/each}}
+{{/each}}
