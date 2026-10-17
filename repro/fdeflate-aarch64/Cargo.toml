@@ -1,0 +1,19 @@
+[package]
+name = "pngrepro"
+version = "0.0.0"
+edition = "2024"
+
+[dependencies]
+image = { version = "=0.25.10", default-features = false, features = ["png", "webp"] }
+png = "=0.18.0"
+fdeflate = "=0.3.7"
+simd-adler32 = "=0.3.8"
+crc32fast = "=1.5.0"
+
+# The same settings as the pzmap-rs test profile, which inherits from dev.
+[profile.mirror]
+inherits = "dev"
+opt-level = 3
+lto = "thin"
+
+[workspace]
