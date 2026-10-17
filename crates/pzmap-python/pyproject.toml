@@ -6,7 +6,7 @@ build-backend = "maturin"
 name = "pzmap"
 description = "Parsers for Project Zomboid's on-disk map formats: lotheader, lotpack and texture packs."
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 license = "MIT OR Apache-2.0"
 # Shipped in the wheel's `.dist-info/licenses/`. The notices cover the Rust crates compiled into
 # the extension module.

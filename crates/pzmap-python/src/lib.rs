@@ -110,7 +110,6 @@ fn cached<'py, T: IntoPyObject<'py>>(
 ///
 /// The two values are `Build.B41` and `Build.B42`. This is not an `enum.Enum`: `int(build)` gives
 /// 0 or 1, and a `Build` compares equal to that number.
-#[allow(clippy::clone_on_copy)]
 #[pyclass(eq, eq_int, frozen, from_py_object, module = "pzmap")]
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
 pub enum Build {
@@ -198,7 +197,7 @@ impl Build {
 }
 
 /// A rectangle of squares, part of a room's floor plan, in world coordinates.
-#[pyclass(frozen, get_all, skip_from_py_object, module = "pzmap")]
+#[pyclass(frozen, get_all, module = "pzmap")]
 pub struct Rectangle {
     /// World X of the rectangle's origin corner.
     pub x: i32,
@@ -221,7 +220,7 @@ impl Rectangle {
 }
 
 /// An object placed in a room, in world coordinates.
-#[pyclass(frozen, get_all, skip_from_py_object, module = "pzmap")]
+#[pyclass(frozen, get_all, module = "pzmap")]
 pub struct RoomObject {
     /// The game's numeric type for the object. This library passes it through unchanged.
     #[pyo3(name = "type")]
@@ -243,7 +242,7 @@ impl RoomObject {
 }
 
 /// One room of a cell, as listed in its `.lotheader`.
-#[pyclass(frozen, get_all, skip_from_py_object, module = "pzmap")]
+#[pyclass(frozen, get_all, module = "pzmap")]
 pub struct Room {
     /// The room's name, such as `"kitchen"`.
     pub name: String,
@@ -269,7 +268,7 @@ impl Room {
 }
 
 /// A building, given as the rooms it contains.
-#[pyclass(frozen, get_all, skip_from_py_object, module = "pzmap")]
+#[pyclass(frozen, get_all, module = "pzmap")]
 pub struct Building {
     /// The positions of this building's rooms in `LotHeader.rooms`.
     pub room_indices: Py<PyTuple>,
@@ -525,7 +524,7 @@ impl LotHeader {
 /// world_x = cell.x * build.cell_size_in_squares + bx * build.block_size_in_squares + square.x
 /// world_y = cell.y * build.cell_size_in_squares + by * build.block_size_in_squares + square.y
 /// ```
-#[pyclass(frozen, get_all, skip_from_py_object, module = "pzmap")]
+#[pyclass(frozen, get_all, module = "pzmap")]
 pub struct Square {
     /// The number of the block the square is in.
     ///
@@ -787,7 +786,7 @@ impl Squares {
 /// Textures are stored with their transparent margins trimmed off. `x`, `y`, `w` and `h` give the
 /// trimmed rectangle inside the page image. `ox` and `oy` give where that rectangle sits inside
 /// the original, untrimmed sprite, which is `ow` by `oh` pixels. All values are in pixels.
-#[pyclass(frozen, get_all, skip_from_py_object, module = "pzmap")]
+#[pyclass(frozen, get_all, module = "pzmap")]
 pub struct Texture {
     /// The texture's name.
     pub name: String,
