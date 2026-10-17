@@ -927,7 +927,7 @@ impl PackView {
             }
         };
         let mut chosen = None;
-        let response = egui::Modal::new(egui::Id::new("picker")).show(ctx, |ui| {
+        let response = egui::Modal::new(egui::Id::unique("picker")).show(ctx, |ui| {
             ui.heading(title);
             chosen = list(
                 ui,
@@ -954,7 +954,7 @@ impl eframe::App for PackView {
 }
 
 fn search_id() -> egui::Id {
-    egui::Id::new("texture-search")
+    egui::Id::unique("texture-search")
 }
 
 /// Where the selected texture sits in the search results, if it is one of them.
