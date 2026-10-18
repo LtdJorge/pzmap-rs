@@ -29,7 +29,6 @@ use std::{
         Command,
         ExitCode,
     },
-    time::SystemTime,
 };
 
 use anyhow::{
@@ -155,47 +154,7 @@ fn read_text(path: &Path) -> Result<String> {
     Ok(text.replace("\r\n", "\n"))
 }
 
-/// Today's date in UTC, as `YYYY-MM-DD`.
+/// Today's date in the local time zone, as `YYYY-MM-DD`.
 fn today() -> String {
-    let seconds = SystemTime::now()
-        .duration_since(SystemTime::UNIX_EPOCH)
-        .map_or(0, |elapsed| elapsed.as_secs());
-    let (year, month, day) = civil_date(seconds / 86_400);
-    format!("{year:04}-{month:02}-{day:02}")
-}
-
-/// Turns a count of days since 1970-01-01 into a year, month and day.
-///
-/// This is Howard Hinnant's `civil_from_days`, for dates on or after 1970.
-fn civil_date(days: u64) -> (u64, u64, u64) {
-    let days = days + 719_468;
-    let era = days / 146_097;
-    let day_of_era = days % 146_097;
-    let year_of_era =
-        (day_of_era - day_of_era / 1_460 + day_of_era / 36_524 - day_of_era / 146_096) / 365;
-    let day_of_year = day_of_era - (365 * year_of_era + year_of_era / 4 - year_of_era / 100);
-    let month_index = (5 * day_of_year + 2) / 153;
-    let day = day_of_year - (153 * month_index + 2) / 5 + 1;
-    let month = if month_index < 10 {
-        month_index + 3
-    } else {
-        month_index - 9
-    };
-    let year = year_of_era + era * 400 + u64::from(month <= 2);
-    (year, month, day)
-}
-
-#[cfg(test)]
-mod tests {
-    use super::civil_date;
-
-    #[test]
-    fn civil_date_matches_known_days() {
-        assert_eq!(civil_date(0), (1970, 1, 1));
-        assert_eq!(civil_date(11_016), (2000, 2, 29));
-        assert_eq!(civil_date(11_017), (2000, 3, 1));
-        assert_eq!(civil_date(20_743), (2026, 10, 17));
-        assert_eq!(civil_date(20_818), (2026, 12, 31));
-        assert_eq!(civil_date(20_819), (2027, 1, 1));
-    }
+    jiff::Zoned::now().date().to_string()
 }

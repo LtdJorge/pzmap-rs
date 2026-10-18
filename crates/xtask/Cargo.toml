@@ -9,6 +9,7 @@ publish = false
 
 [dependencies]
 anyhow = { workspace = true }
+jiff = "0.2.37"
 serde_json = { workspace = true }
 
 [lints]
