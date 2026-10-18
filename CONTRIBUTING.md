@@ -124,7 +124,9 @@ named after the crate and its version, such as `libpzmap-v0.2.0`. Pushing the ta
 `.github/workflows/release.yml`, which publishes the crate and creates a GitHub Release from
 its changelog section. libpzmap, pzmap2img and pzmap-tools go to crates.io. pzmap-python goes to
 PyPI as the `pzmap` project, with a wheel for each platform and a source distribution. The
-workflow tests each wheel before publishing. pzmap-java is not released yet.
+workflow tests each wheel before publishing. pzmap-java goes to Maven Central as
+`io.github.ltdjorge:pzmap`, as one jar with the native library for every platform. The workflow
+tests the library on each platform and the finished jar on four of them.
 
 The `just` commands below check each step before taking it, and print the next one.
 
@@ -144,7 +146,14 @@ crates.io only lets a workflow publish a crate that already exists. So the first
 new crate is published by hand with `just release-first <crate>`, which then explains how to
 add the crate's trusted publisher. After that, `just release-tag` creates its GitHub Release.
 PyPI has no such limit: its trusted publisher can be set up before the project exists, so the
-workflow publishes pzmap-python's first version too.
+workflow publishes pzmap-python's first version too. Maven Central uses a token and a signing key,
+stored as secrets of the `maven-central` environment, so the workflow handles its first version
+as well.
+
+The workflow only uploads pzmap-java to the Central Portal. To release it, click "Publish" on the
+deployment at <https://central.sonatype.com/publishing/deployments>. Maven Central shows it up to
+30 minutes later. Do not run the workflow again for a version that is waiting there, because it
+would upload a second deployment.
 
 A published version cannot be replaced, only yanked. If a release fails before it publishes,
 `just release-status` explains what went wrong and how to retry.

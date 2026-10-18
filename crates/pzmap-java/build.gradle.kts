@@ -1,15 +1,24 @@
+import com.vanniktech.maven.publish.JavaLibrary
+import com.vanniktech.maven.publish.JavadocJar
+import com.vanniktech.maven.publish.SourcesJar
 import org.gradle.internal.os.OperatingSystem
 
 plugins {
     `java-library`
-    `maven-publish`
+    id("com.vanniktech.maven.publish") version "0.37.0"
 }
+
+// The version comes from this crate's Cargo.toml, so a release changes it in one place. The
+// first `version` line there is the package's.
+version = Regex("""(?m)^version = "([^"]+)"""")
+    .find(file("Cargo.toml").readText())
+    ?.groupValues
+    ?.get(1)
+    ?: error("Cargo.toml has no version line")
 
 java {
     // The API uses records, and 17 is the oldest long-term-support Java release that has them.
     toolchain { languageVersion = JavaLanguageVersion.of(17) }
-    withSourcesJar()
-    withJavadocJar()
 }
 
 // The Java sources live under `java/`, so the crate root stays a normal Cargo package.
@@ -29,6 +38,23 @@ dependencies {
 /** The cargo profile to build with: `release` by default, or `-PcargoProfile=debug`. */
 val cargoProfile = (findProperty("cargoProfile") as String?) ?: "release"
 val cargoTargetDir = layout.projectDirectory.dir("../../target/$cargoProfile")
+
+/**
+ * A directory of native libraries built beforehand, laid out as `native/<os>-<arch>/<file>`, from
+ * `-PprebuiltNatives=<dir>`.
+ *
+ * The release workflow builds the library on each platform and passes them all here, so one jar
+ * holds them all. Without it, the jar holds only this machine's library, built with cargo.
+ */
+val prebuiltNatives = findProperty("prebuiltNatives") as String?
+
+/**
+ * A native library file for the tests to load instead of cargo's, from `-PnativeLibrary=<file>`.
+ *
+ * The release workflow uses it to test the exact file it ships. With it, nothing runs cargo, and
+ * a jar built without `-PprebuiltNatives` holds no native library.
+ */
+val testNativeLibrary = findProperty("nativeLibrary") as String?
 
 /** The `<os>-<arch>` name of the jar directory that holds the native library. */
 val nativePlatform: String by lazy {
@@ -85,7 +111,21 @@ val copyNativeLibrary by tasks.registering(Copy::class) {
 }
 
 sourceSets.named("main") {
-    output.dir(mapOf("builtBy" to copyNativeLibrary), layout.buildDirectory.dir("native-resources"))
+    if (prebuiltNatives != null) {
+        output.dir(file(prebuiltNatives))
+    } else if (testNativeLibrary == null) {
+        output.dir(
+            mapOf("builtBy" to copyNativeLibrary),
+            layout.buildDirectory.dir("native-resources"),
+        )
+    }
+}
+
+// The same inputs give a byte-identical jar, so the release can check that the jar it publishes
+// is the one it tested.
+tasks.withType<AbstractArchiveTask>().configureEach {
+    isPreserveFileTimestamps = false
+    isReproducibleFileOrder = true
 }
 
 // Both licenses ship inside the jar, with the notices for the Rust crates compiled into the
@@ -98,13 +138,17 @@ tasks.jar {
 
 tasks.test {
     useJUnitPlatform()
-    dependsOn(cargoBuild)
 
-    // Load the library straight from cargo's output, because the jar has not been built yet.
-    systemProperty(
-        "pzmap.native.library",
-        cargoTargetDir.file(nativeLibraryName).asFile.absolutePath,
-    )
+    // Load the library straight from a file, because the jar has not been built yet.
+    if (testNativeLibrary != null) {
+        systemProperty("pzmap.native.library", file(testNativeLibrary).absolutePath)
+    } else {
+        dependsOn(cargoBuild)
+        systemProperty(
+            "pzmap.native.library",
+            cargoTargetDir.file(nativeLibraryName).asFile.absolutePath,
+        )
+    }
 
     // From JDK 24, loading a native library is a restricted operation.
     jvmArgs("--enable-native-access=ALL-UNNAMED")
@@ -119,29 +163,44 @@ tasks.javadoc {
     (options as StandardJavadocDocletOptions).addStringOption("Xdoclint:none", "-quiet")
 }
 
-publishing {
-    publications {
-        create<MavenPublication>("maven") {
-            from(components["java"])
-            artifactId = "pzmap"
-            pom {
-                name = "pzmap"
-                description = "Parsers for Project Zomboid's on-disk map formats."
-                url = "https://github.com/LtdJorge/pzmap-rs"
-                // Dual-licensed: users may choose either license.
-                licenses {
-                    license {
-                        name = "MIT License"
-                        url = "https://opensource.org/licenses/MIT"
-                    }
-                    license {
-                        name = "Apache License, Version 2.0"
-                        url = "https://www.apache.org/licenses/LICENSE-2.0.txt"
-                    }
-                }
-                developers { developer { name = "Jorge López" } }
-                scm { url = "https://github.com/LtdJorge/pzmap-rs" }
+// Uploads to the Central Portal with `./gradlew publishToMavenCentral`. The deployment then waits
+// there until someone clicks "Publish" on https://central.sonatype.com/publishing/deployments.
+// The credentials and the signing key come from Gradle properties, which the release workflow
+// sets from its secrets.
+mavenPublishing {
+    configure(JavaLibrary(javadocJar = JavadocJar.Javadoc(), sourcesJar = SourcesJar.Sources()))
+    publishToMavenCentral()
+    // Maven Central needs every file signed. Without a key, as in a local build, publications
+    // are left unsigned, so `publishToMavenLocal` still works.
+    if (providers.gradleProperty("signingInMemoryKey").isPresent) signAllPublications()
+    coordinates(group.toString(), "pzmap", version.toString())
+    pom {
+        name = "pzmap"
+        description = "Parsers for Project Zomboid's on-disk map formats."
+        url = "https://github.com/LtdJorge/pzmap-rs"
+        inceptionYear = "2026"
+        // Dual-licensed: users may choose either license.
+        licenses {
+            license {
+                name = "MIT License"
+                url = "https://opensource.org/licenses/MIT"
             }
+            license {
+                name = "Apache License, Version 2.0"
+                url = "https://www.apache.org/licenses/LICENSE-2.0.txt"
+            }
+        }
+        developers {
+            developer {
+                id = "LtdJorge"
+                name = "Jorge López"
+                url = "https://github.com/LtdJorge"
+            }
+        }
+        scm {
+            url = "https://github.com/LtdJorge/pzmap-rs"
+            connection = "scm:git:https://github.com/LtdJorge/pzmap-rs.git"
+            developerConnection = "scm:git:ssh://git@github.com/LtdJorge/pzmap-rs.git"
         }
     }
 }

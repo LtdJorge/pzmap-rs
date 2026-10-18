@@ -8,6 +8,36 @@ return the file contents as plain Java values. They do not decode images or draw
 texture page comes back as PNG bytes, and a square's tiles come back as indices into its cell's
 list of tile names.
 
+## Install
+
+pzmap is on Maven Central as `io.github.ltdjorge:pzmap`. With Gradle:
+
+```kotlin
+dependencies {
+    implementation("io.github.ltdjorge:pzmap:0.1.0")
+}
+```
+
+With Maven:
+
+```xml
+<dependency>
+  <groupId>io.github.ltdjorge</groupId>
+  <artifactId>pzmap</artifactId>
+  <version>0.1.0</version>
+</dependency>
+```
+
+The jar holds the native library for these platforms:
+
+- Linux on x86-64 and ARM64, with glibc 2.17 or newer;
+- macOS on Apple silicon and Intel;
+- Windows on x86-64.
+
+On other platforms, including Linux with musl such as Alpine, build the library yourself and
+point the `pzmap.native.library` system property at it, as described in
+[Native access](#native-access).
+
 ## Layout
 
 - `src/` holds the native side, a Cargo crate that builds `libpzmap_jni.so`.
@@ -24,7 +54,16 @@ list of tile names.
 ```
 
 The Gradle build runs `cargo build -p pzmap-java` and copies the resulting library into the jar
-under `native/<os>-<arch>/`. At runtime, `NativeLoader` extracts it from there and loads it.
+under `native/<os>-<arch>/`. At runtime, `NativeLoader` extracts it from there and loads it. A
+local build holds only this machine's library. `publishToMavenLocal` leaves the files unsigned
+unless a signing key is configured.
+
+The release workflow builds the library on each platform and puts them all in one jar, with two
+Gradle options:
+
+- `-PprebuiltNatives=<dir>` takes the libraries from a directory laid out as
+  `native/<os>-<arch>/<file>`, instead of running cargo.
+- `-PnativeLibrary=<file>` runs the tests against that library file, instead of running cargo.
 
 The wrapper downloads the Gradle version the build needs, so you don't need to install Gradle. On
 Windows, use `gradlew.bat`.

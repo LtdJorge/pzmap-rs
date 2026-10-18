@@ -4,6 +4,9 @@ name: Release
 # `libpzmap-v0.1.0`. This workflow publishes that crate and creates a GitHub Release with the
 # crate's changelog section as its notes. The Rust crates go to crates.io. pzmap-python goes to
 # PyPI as the `pzmap` project, as wheels for each platform and a source distribution.
+# pzmap-java goes to Maven Central as `io.github.ltdjorge:pzmap`, as one jar that holds the
+# native library for every platform. Its upload waits in the Central Portal until someone
+# publishes it there.
 #
 # A version that is already published will not be published again. An existing GitHub Release
 # is left alone. So the workflow can be run again for a tag, from the Actions tab, to finish a
@@ -16,6 +19,7 @@ on:
       - "pzmap2img-v*"
       - "pzmap-tools-v*"
       - "pzmap-python-v*"
+      - "pzmap-java-v*"
   workflow_dispatch:
     inputs:
       tag:
@@ -63,6 +67,7 @@ jobs:
           case "$crate" in
             libpzmap | pzmap2img | pzmap-tools) registry=crates-io ;;
             pzmap-python) registry=pypi ;;
+            pzmap-java) registry=maven ;;
             *) echo "::error::$TAG does not name a crate this workflow releases"; exit 1 ;;
           esac
           if ! [[ $version =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
@@ -126,6 +131,10 @@ jobs:
         run: |
           if [ "$REGISTRY" = crates-io ]; then
             url="https://crates.io/api/v1/crates/$CRATE/$VERSION"
+          elif [ "$REGISTRY" = maven ]; then
+            # A version is on Maven Central once its POM is. Publishing it in the Central Portal
+            # can take 30 minutes to reach this URL.
+            url="https://repo1.maven.org/maven2/io/github/ltdjorge/pzmap/$VERSION/pzmap-$VERSION.pom"
           else
             # PyPI writes pre-releases the Python way: 1.0.0-rc.1 becomes 1.0.0rc1, and
             # 1.0.0-beta becomes 1.0.0b0.
@@ -313,8 +322,230 @@ jobs:
         with:
           packages-dir: dist/
 
+  # Builds the JNI library on each platform and tests it there, with the Java tests loading that
+  # exact file. Debug info is stripped to keep the jar small.
+  java-natives:
+    needs: check
+    if: needs.check.outputs.registry == 'maven' && needs.check.outputs.published == 'false'
+    strategy:
+      matrix:
+        include:
+          # Linked against glibc 2.17 with cargo-zigbuild, so the library also loads on older
+          # distributions.
+          - platform: linux-x86_64
+            runner: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            zigbuild: x86_64-unknown-linux-gnu.2.17
+            file: libpzmap_jni.so
+            test: true
+          - platform: linux-aarch64
+            runner: ubuntu-24.04-arm
+            target: aarch64-unknown-linux-gnu
+            zigbuild: aarch64-unknown-linux-gnu.2.17
+            file: libpzmap_jni.so
+            test: true
+          - platform: macos-aarch64
+            runner: macos-latest
+            target: aarch64-apple-darwin
+            file: libpzmap_jni.dylib
+            test: true
+          # Built on the Apple silicon runner for Intel Macs, so it cannot be tested here.
+          - platform: macos-x86_64
+            runner: macos-latest
+            target: x86_64-apple-darwin
+            file: libpzmap_jni.dylib
+            test: false
+          - platform: windows-x86_64
+            runner: windows-latest
+            target: x86_64-pc-windows-msvc
+            file: pzmap_jni.dll
+            test: true
+    runs-on: ${{ matrix.runner }}
+    defaults:
+      run:
+        shell: bash
+    env:
+      CARGO_PROFILE_RELEASE_STRIP: debuginfo
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: refs/tags/${{ needs.check.outputs.tag }}
+      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # master
+        with:
+          toolchain: stable
+          targets: ${{ matrix.target }}
+      - if: matrix.zigbuild
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.x"
+      - name: Build with cargo-zigbuild
+        if: matrix.zigbuild
+        env:
+          ZIGBUILD_TARGET: ${{ matrix.zigbuild }}
+        run: |
+          python -m pip install "cargo-zigbuild==0.23.4" "ziglang==0.16.0"
+          cargo zigbuild -p pzmap-java --release --locked --target "$ZIGBUILD_TARGET"
+      - name: Build with cargo
+        if: ${{ !matrix.zigbuild }}
+        env:
+          TARGET: ${{ matrix.target }}
+        run: cargo build -p pzmap-java --release --locked --target "$TARGET"
+      - name: Put the library in its jar directory
+        env:
+          TARGET: ${{ matrix.target }}
+          PLATFORM: ${{ matrix.platform }}
+          FILE: ${{ matrix.file }}
+        run: |
+          mkdir -p "natives/native/$PLATFORM"
+          cp "target/$TARGET/release/$FILE" "natives/native/$PLATFORM/"
+          ls -l "natives/native/$PLATFORM"
+
+      - if: matrix.test
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+      - name: Test the library
+        if: matrix.test
+        working-directory: crates/pzmap-java
+        env:
+          LIBRARY: ${{ github.workspace }}/natives/native/${{ matrix.platform }}/${{ matrix.file }}
+        run: ./gradlew test --no-daemon "-PnativeLibrary=$LIBRARY"
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: java-native-${{ matrix.platform }}
+          path: natives
+
+  # Puts every platform's library in one jar. The build is reproducible, so java-publish can
+  # rebuild it and check that it gets the same jar.
+  java-jar:
+    needs: [ check, java-natives ]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: refs/tags/${{ needs.check.outputs.tag }}
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: java-native-*
+          merge-multiple: true
+          path: natives
+      - name: Build the jar
+        working-directory: crates/pzmap-java
+        env:
+          NATIVES: ${{ github.workspace }}/natives
+        run: ./gradlew jar --no-daemon "-PprebuiltNatives=$NATIVES"
+      - name: Check that the jar has every platform's library
+        working-directory: crates/pzmap-java
+        env:
+          VERSION: ${{ needs.check.outputs.version }}
+        run: |
+          jar="build/libs/pzmap-$VERSION.jar"
+          unzip -l "$jar" | grep native/
+          for library in \
+            native/linux-x86_64/libpzmap_jni.so \
+            native/linux-aarch64/libpzmap_jni.so \
+            native/macos-aarch64/libpzmap_jni.dylib \
+            native/macos-x86_64/libpzmap_jni.dylib \
+            native/windows-x86_64/pzmap_jni.dll
+          do
+            if ! unzip -l "$jar" "$library" > /dev/null; then
+              echo "::error::$jar has no $library"
+              exit 1
+            fi
+          done
+          sha256sum "$jar"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: java-jar
+          path: crates/pzmap-java/build/libs/pzmap-${{ needs.check.outputs.version }}.jar
+
+  # Loads the jar's own native library on each platform and calls it.
+  java-smoke:
+    needs: [ check, java-jar ]
+    strategy:
+      matrix:
+        runner: [ ubuntu-latest, ubuntu-24.04-arm, macos-latest, windows-latest ]
+    runs-on: ${{ matrix.runner }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: refs/tags/${{ needs.check.outputs.tag }}
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: java-jar
+          path: jar
+      - name: Run the smoke test against the jar
+        env:
+          VERSION: ${{ needs.check.outputs.version }}
+        run: java -cp "jar/pzmap-$VERSION.jar" crates/pzmap-java/smoke/Smoke.java
+
+  java-publish:
+    needs: [ check, java-smoke ]
+    runs-on: ubuntu-latest
+    # The Maven Central credentials and the signing key are secrets of this environment.
+    environment: maven-central
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: refs/tags/${{ needs.check.outputs.tag }}
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: java-native-*
+          merge-multiple: true
+          path: natives
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: java-jar
+          path: tested
+      - name: Check that the rebuilt jar is the tested one
+        working-directory: crates/pzmap-java
+        env:
+          NATIVES: ${{ github.workspace }}/natives
+          TESTED: ${{ github.workspace }}/tested
+          VERSION: ${{ needs.check.outputs.version }}
+        run: |
+          ./gradlew jar --no-daemon "-PprebuiltNatives=$NATIVES"
+          sha256sum "build/libs/pzmap-$VERSION.jar" "$TESTED/pzmap-$VERSION.jar"
+          if ! cmp "build/libs/pzmap-$VERSION.jar" "$TESTED/pzmap-$VERSION.jar"; then
+            echo "::error::The rebuilt jar differs from the one the smoke test ran on"
+            exit 1
+          fi
+      - name: Upload to the Central Portal
+        working-directory: crates/pzmap-java
+        env:
+          NATIVES: ${{ github.workspace }}/natives
+          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.SIGNING_KEY }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_KEY_PASSWORD }}
+        run: ./gradlew publishToMavenCentral --no-daemon "-PprebuiltNatives=$NATIVES"
+      - name: Next step
+        env:
+          VERSION: ${{ needs.check.outputs.version }}
+        run: |
+          echo "::notice::pzmap $VERSION is uploaded. Publish it at https://central.sonatype.com/publishing/deployments"
+
   github-release:
-    needs: [ check, publish, publish-pypi ]
+    needs: [ check, publish, publish-pypi, java-publish ]
     # Runs after a publish, or when the version was already published and the publish jobs were
     # skipped. A failed job anywhere before it stops it.
     if: ${{ !cancelled() && !failure() }}

@@ -1,4 +1,4 @@
-//! Releases the crates published to crates.io and PyPI.
+//! Releases the crates published to crates.io, PyPI and Maven Central.
 //!
 //! A release is a tag named after the crate and its version, such as `libpzmap-v0.1.0`.
 //! Pushing the tag runs `.github/workflows/release.yml`, which publishes the crate and creates
@@ -45,6 +45,8 @@ enum Registry {
     CratesIo,
     /// PyPI, under the given project name.
     PyPi(&'static str),
+    /// Maven Central, under the given group and artifact.
+    Maven(&'static str, &'static str),
 }
 
 impl Registry {
@@ -52,16 +54,18 @@ impl Registry {
         match self {
             Registry::CratesIo => "crates.io",
             Registry::PyPi(_) => "PyPI",
+            Registry::Maven(..) => "Maven Central",
         }
     }
 }
 
 /// The crates that `release.yml` publishes, and where. Its tag patterns list the same crates.
-const RELEASED: [(&str, Registry); 4] = [
+const RELEASED: [(&str, Registry); 5] = [
     ("libpzmap", Registry::CratesIo),
     ("pzmap2img", Registry::CratesIo),
     ("pzmap-tools", Registry::CratesIo),
     ("pzmap-python", Registry::PyPi("pzmap")),
+    ("pzmap-java", Registry::Maven("io.github.ltdjorge", "pzmap")),
 ];
 
 /// The GitHub environment that the crates.io trusted publishers are set up for.
@@ -188,12 +192,13 @@ impl Tools {
         match registry(krate)? {
             Registry::CratesIo => self.crates_io_version(krate),
             Registry::PyPi(project) => self.pypi_version(project),
+            Registry::Maven(group, artifact) => self.maven_version(group, artifact),
         }
     }
 
-    /// The newest version of `project` on PyPI, or `None` if it was never published.
-    fn pypi_version(&self, project: &str) -> Result<Option<Version>> {
-        // `-w` adds the HTTP status on a line of its own after the body.
+    /// Asks `url` with curl and returns the HTTP status and the body.
+    fn http_get(&self, url: &str) -> Result<(String, String)> {
+        // `--write-out` adds the HTTP status on a line of its own after the body.
         let output = capture(self.command("curl").args([
             "--silent",
             "--show-error",
@@ -201,11 +206,40 @@ impl Tools {
             "pzmap-rs xtask (github.com/LtdJorge/pzmap-rs)",
             "--write-out",
             "\n%{http_code}",
-            &format!("https://pypi.org/pypi/{project}/json"),
+            url,
         ]))
-        .context("cannot ask PyPI for the published versions")?;
+        .with_context(|| format!("cannot reach {url}"))?;
         let (body, status) = output.rsplit_once('\n').unwrap_or(("", &output));
-        match status {
+        Ok((status.to_owned(), body.to_owned()))
+    }
+
+    /// The newest release of `group:artifact` on Maven Central, or `None` if there is none.
+    ///
+    /// A version appears here up to 30 minutes after it is published in the Central Portal.
+    fn maven_version(&self, group: &str, artifact: &str) -> Result<Option<Version>> {
+        let url = format!(
+            "https://repo1.maven.org/maven2/{}/{artifact}/maven-metadata.xml",
+            group.replace('.', "/")
+        );
+        let (status, body) = self.http_get(&url)?;
+        match status.as_str() {
+            "404" => return Ok(None),
+            "200" => {}
+            _ => bail!("Maven Central answered {status} for {group}:{artifact}"),
+        }
+        let release = body
+            .split_once("<release>")
+            .and_then(|(_, rest)| rest.split_once("</release>"))
+            .map(|(release, _)| release.trim())
+            .ok_or_else(|| anyhow!("the Maven Central metadata for {artifact} has no release"))?;
+        Ok(Some(release.parse()?))
+    }
+
+    /// The newest version of `project` on PyPI, or `None` if it was never published.
+    fn pypi_version(&self, project: &str) -> Result<Option<Version>> {
+        let (status, body) = self.http_get(&format!("https://pypi.org/pypi/{project}/json"))?;
+        let body = body.as_str();
+        match status.as_str() {
             "404" => return Ok(None),
             "200" => {}
             _ => bail!("PyPI answered {status} for {project}"),
@@ -534,8 +568,14 @@ fn unfinished_release(tools: &Tools, package: &Package) -> Result<String> {
     };
     let url = field("url")
         .unwrap_or_else(|| format!("https://github.com/{REPO}/actions/workflows/release.yml"));
+    let maven = matches!(registry(&package.name)?, Registry::Maven(..));
     Ok(
         match (field("status").as_deref(), field("conclusion").as_deref()) {
+            // The workflow only uploads to the Central Portal. Running it again would upload a
+            // second deployment.
+            (Some("completed"), Some("success")) if maven => String::from(
+                "the release workflow uploaded it to the Central Portal. Publish it at\nhttps://central.sonatype.com/publishing/deployments, and Maven Central shows it\nup to 30 minutes later. Do not run the workflow again, which would upload it twice.",
+            ),
             (Some("completed"), Some("success")) => {
                 format!("the release workflow passed, but the release is incomplete: {url}")
             }
@@ -691,6 +731,11 @@ pub(crate) fn tag(krate: &str) -> Result<()> {
         println!(
             "{krate} {version} is already on {}, so the workflow only creates the GitHub Release.",
             registry.name()
+        );
+    } else if matches!(registry, Registry::Maven(..)) {
+        println!(
+            "Pushing the tag uploads {krate} {version} to the Central Portal. It reaches Maven \
+             Central once you publish it there, and a published version cannot be replaced."
         );
     } else {
         println!(
