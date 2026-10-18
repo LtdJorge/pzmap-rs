@@ -64,14 +64,18 @@ third-party notices and cargo-deny. Run `just` to list the other commands.
 ## Third-party notices
 
 Each crate that ships a binary has a `THIRD-PARTY-NOTICES.md` file listing the licenses of the
-code compiled into it. When you add, remove or update a dependency, regenerate these files. The
-task needs cargo-about, which you can install with `cargo install cargo-about`.
+code compiled into it. When you add a dependency, regenerate these files. The task needs
+cargo-about, which you can install with `cargo install cargo-about`.
 
 ```sh
 cargo run -p xtask -- notices
 ```
 
-Add `--check` to only check that the files are up to date.
+Add `--check` to only check that the files still cover everything the binaries contain. CI runs
+this check. It passes when a file lists older versions of the same crates, or crates that are no
+longer used, so a dependency update only fails it when it adds a crate or changes a license.
+`just release-prepare` regenerates the files for every release, so each release ships exact
+notices.
 
 ## Panics
 
@@ -119,7 +123,8 @@ excerpts used in tests. Build test inputs by hand in the test, or read them from
 
 ## Releasing
 
-This section is for maintainers. Each crate is released on its own, from `master`, with a tag
+This section is for maintainers. `master` only changes through pull requests that pass CI, for
+maintainers too. Each crate is released on its own, from `master`, with a tag
 named after the crate and its version, such as `libpzmap-v0.2.0`. Pushing the tag runs
 `.github/workflows/release.yml`, which publishes the crate and creates a GitHub Release from
 its changelog section. libpzmap, pzmap2img and pzmap-tools go to crates.io. pzmap-python goes to
@@ -132,13 +137,15 @@ The `just` commands below check each step before taking it, and print the next o
 
 1. `just release-status` shows each crate's version, tag, published version and GitHub Release,
    and what to do next.
-2. `just release-prepare <crate> <version>` bumps the crate's version, moves its
+2. On an up-to-date `master`, `just release-prepare <crate> <version>` creates the branch
+   `release/<crate>-v<version>`. On it, it bumps the crate's version, moves its
    `[Unreleased]` entries under a heading for the new version, and updates the changelog's
    links, `Cargo.lock` and the notices. If other crates require a version the new one does not
    satisfy, it raises their requirement too, and those crates need a release after this one.
    Then it runs `just check`. For a crate's first release, give its current version, and only
    the changelog changes.
-3. Review and commit the changes, push `master`, and wait for CI to pass.
+3. Review and commit the changes, push the branch and open a pull request. Once CI passes,
+   merge it, then switch to `master` and pull. Wait for CI to pass on the merged commit.
 4. `just release-tag <crate>` checks that the commit is on GitHub, that CI passed for it and
    that the changelog is complete. Then it tags the commit and asks before pushing the tag.
 

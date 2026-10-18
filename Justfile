@@ -41,7 +41,7 @@ doc:
 notices:
     cargo run -q -p xtask --locked -- notices
 
-# Fail if any THIRD-PARTY-NOTICES.md file is out of date. Needs cargo-about.
+# Fail if a THIRD-PARTY-NOTICES.md file lacks a crate or license its binary has. Needs cargo-about.
 notices-check:
     cargo run -q -p xtask --locked -- notices --check
 
@@ -53,15 +53,16 @@ deny:
 release-status crate="":
     cargo run -q -p xtask --locked -- release status {{ crate }}
 
-# Bump a crate to a new version, date its changelog section, and run every check.
+# Bump a crate to a new version on a release branch, date its changelog section, and run every check.
 release-prepare crate version:
     cargo run -q -p xtask --locked -- release prepare {{ crate }} {{ version }}
     just check
     @echo ""
     @echo "Every check passed. Next:"
     @echo "  1. Review the changes with git diff, and commit them as 'Release {{ crate }} v{{ version }}'."
-    @echo "  2. Push master with git push origin master, and wait for CI to pass."
-    @echo "  3. Run just release-tag {{ crate }}."
+    @echo "  2. Push the branch with git push -u origin HEAD, and open a pull request with gh pr create --fill."
+    @echo "  3. Once CI passes, merge the pull request, then run git switch master and git pull."
+    @echo "  4. Wait for CI to pass on master, then run just release-tag {{ crate }}."
 
 # Tag a crate's version and push the tag, which publishes it. Asks before pushing.
 release-tag crate:

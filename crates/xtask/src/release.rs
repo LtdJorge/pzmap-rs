@@ -305,8 +305,9 @@ impl Tools {
             "origin/master",
         ]))? {
             bail!(
-                "this commit is not on GitHub yet; run `git push origin master`, wait for CI, \
-                 then run this again"
+                "this commit is not on GitHub's master; master only changes through pull \
+                 requests, so merge the release's pull request, run `git pull`, wait for CI on \
+                 master, then run this again"
             );
         }
         let commit = self.git(&["rev-parse", "HEAD"])?;
@@ -493,7 +494,8 @@ fn print_status(tools: &Tools, package: &Package) -> Result<()> {
                     registry.name()
                 ),
                 Ordering::Less => format!(
-                    "{} is prepared: push master, wait for CI, then just release-tag {name}",
+                    "{} is prepared: merge its pull request, run git pull, wait for CI on \
+                     master, then just release-tag {name}",
                     package.version
                 ),
                 Ordering::Greater => format!(
@@ -539,7 +541,8 @@ fn unfinished_release(tools: &Tools, package: &Package) -> Result<String> {
     if !changelog::has_entries(&tagged_changelog, &version) {
         return Ok(format!(
             "the release workflow cannot run, because {changelog} at {tag} has no section for \
-             {version}.\nAdd the section on master, push it and wait for CI. Then move the \
+             {version}.\nAdd the section through a pull request, merge it and wait for CI on \
+             master. Then move the \
              tag:\n  git push --delete origin {tag}\n  git tag -d {tag}\n  just release-tag {}",
             package.name
         ));
@@ -653,6 +656,24 @@ pub(crate) fn prepare(krate: &str, version: &str) -> Result<()> {
             raised.push((dependent, text));
         }
     }
+
+    // master only changes through pull requests, so the release goes on a branch of its own.
+    let branch = format!("release/{tag}");
+    let local = format!("refs/heads/{branch}");
+    if succeeds(
+        tools
+            .command("git")
+            .args(["rev-parse", "--verify", "--quiet", &local]),
+    )? || !tools
+        .git(&["ls-remote", "--heads", "origin", &branch])?
+        .is_empty()
+    {
+        bail!("the branch {branch} already exists; delete it or finish its pull request first");
+    }
+    run(tools
+        .command("git")
+        .args(["switch", "--quiet", "--create", &branch]))?;
+    println!("Created the branch {branch} for the release.");
 
     write(&changelog_path, &new_changelog)?;
     write(&package.manifest, &new_manifest)?;
