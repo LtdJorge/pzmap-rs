@@ -57,7 +57,7 @@ jobs:
         env:
           RUSTDOCFLAGS: -D warnings
 
-      - name: Third-party notices are up to date
+      - name: Third-party notices cover every crate
         run: cargo run -p xtask --locked -- notices --check
 
       - name: cargo-deny
