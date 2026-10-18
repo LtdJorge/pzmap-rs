@@ -7,6 +7,8 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-10-18
+
 The first public release.
 
 ### Added
@@ -14,4 +16,5 @@ The first public release.
 - Java bindings for the lotheader, lotpack and texture pack parsers, with the native library
   inside the jar.
 
-[Unreleased]: https://github.com/LtdJorge/pzmap-rs/commits/master/crates/pzmap-java
+[Unreleased]: https://github.com/LtdJorge/pzmap-rs/compare/pzmap-java-v0.1.0...master
+[0.1.0]: https://github.com/LtdJorge/pzmap-rs/releases/tag/pzmap-java-v0.1.0
